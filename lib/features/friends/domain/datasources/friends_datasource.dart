@@ -6,4 +6,5 @@ abstract class FriendsDatasource {
   Future<List<FriendEntity>> getFriends();
   Future<bool> deleteFriend(int idFriend);
   Future<void> assignLocationToFriend(int friendId, int location);
+  Future<bool> updateFriend(FriendEntity friend);
 }

@@ -37,8 +37,16 @@ mixin _$FriendsStore on _FriendsStore, Store {
       AsyncAction('_FriendsStore.addFriend', context: context);
 
   @override
-  Future<void> addFriend(FriendEntity friend) {
+  Future<Map<String, dynamic>> addFriend(FriendEntity friend) {
     return _$addFriendAsyncAction.run(() => super.addFriend(friend));
+  }
+
+  late final _$deleteFriendAsyncAction =
+      AsyncAction('_FriendsStore.deleteFriend', context: context);
+
+  @override
+  Future<bool> deleteFriend(int idFriend) {
+    return _$deleteFriendAsyncAction.run(() => super.deleteFriend(idFriend));
   }
 
   late final _$assignLocationAsyncAction =

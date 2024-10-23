@@ -18,11 +18,12 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB() async {
-    
     return await openDatabase(
       join(await getDatabasesPath(), 'app_database.db'),
-      onCreate: (db, version) {
-        db.execute('''
+      version: 1,
+      onCreate: (db, version) async {
+        // Crear la tabla de locations
+        await db.execute('''
           CREATE TABLE locations(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE,
@@ -31,19 +32,30 @@ class DatabaseHelper {
             description TEXT
           )
         ''');
-        db.execute('''
+
+        // Crear la tabla de friends
+        await db.execute('''
           CREATE TABLE friends(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             firstName TEXT,
             lastName TEXT,
             email TEXT,
             phoneNumber TEXT,
-            photoUrl TEXT,
-            assignedLocations TEXT
+            photoUrl TEXT
+          )
+        ''');
+
+        // Crear la tabla intermedia friend_locations
+        await db.execute('''
+          CREATE TABLE friend_locations(
+            friendId INTEGER,
+            locationId INTEGER,
+            PRIMARY KEY (friendId, locationId),
+            FOREIGN KEY (friendId) REFERENCES friends(id) ON DELETE CASCADE,
+            FOREIGN KEY (locationId) REFERENCES locations(id) ON DELETE CASCADE
           )
         ''');
       },
-      version: 1,
     );
   }
 }
