@@ -7,6 +7,10 @@ import 'package:prueba_inter/features/friends/domain/entities/friend_entity.dart
 import 'package:prueba_inter/features/friends/infrastructure/datasources/friends_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/friends/infrastructure/repositories/friends_repository_impl.dart';
 import 'package:prueba_inter/features/friends/presentation/stores/friends_store.dart';
+import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
+import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
+import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
+import 'package:prueba_inter/features/locations/presentation/store/locations_store.dart';
 
 class FriendsScreen extends StatefulWidget {
   static const name = "friends-screen";
@@ -18,15 +22,23 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   late FriendsStore _friendsStore;
+  late LocationsStore _locationsStore;
   String? _imagePath;
+  final List<LocationEntity> _availableLocations = [];
 
   @override
   void initState() {
     super.initState();
-    final datasource = FriendsDatasourceLocaldatabaseImpl();
-    final repository = FriendsRepositoryImpl(datasource: datasource);
-    _friendsStore = FriendsStore(repository);
+    final friendsDatasource = FriendsDatasourceLocaldatabaseImpl();
+    final friendsRepository =
+        FriendsRepositoryImpl(datasource: friendsDatasource);
+    _friendsStore = FriendsStore(friendsRepository);
     _friendsStore.fetchFriends(); // Carga los amigos al iniciar la pantalla
+
+    final locationsDatasource = LocationsDatasourceLocaldatabaseImpl();
+    final locationsRepository =
+        LocationsRepositoryImpl(datasource: locationsDatasource);
+    _locationsStore = LocationsStore(locationsRepository);
   }
 
   void _showAddFriendDialog() {
@@ -40,6 +52,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             });
           },
           friendsStore: _friendsStore,
+          locationsStore: _locationsStore,
         );
       },
     );
@@ -114,9 +127,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
 class AddFriendDialog extends StatefulWidget {
   final Function(String) onImagePicked;
   final FriendsStore friendsStore;
+  final LocationsStore locationsStore;
 
-  const AddFriendDialog(
-      {required this.onImagePicked, required this.friendsStore, super.key});
+  const AddFriendDialog({
+    required this.onImagePicked,
+    required this.friendsStore,
+    required this.locationsStore,
+    super.key,
+  });
 
   @override
   _AddFriendDialogState createState() => _AddFriendDialogState();
@@ -128,6 +146,28 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   String? _imagePath;
+  List<LocationEntity> _locations = [];
+  final List<int> _selectedLocationIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocations();
+  }
+
+  Future<void> _loadLocations() async {
+    List<LocationEntity> allLocations =
+        await widget.locationsStore.fetchLocations();
+    List<LocationEntity> occupiedLocations =
+        await widget.friendsStore.fetchOccupiedLocationsExcludingFriend(0);
+    print('Ubicaciones ocupadas: $occupiedLocations');
+    setState(() {
+      _locations = allLocations
+          .where((location) => !occupiedLocations
+              .any((occupied) => occupied.idLocation == location.idLocation))
+          .toList();
+    });
+  }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -180,7 +220,16 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
               if (_imagePath != null) ...[
                 const SizedBox(height: 10),
                 Image.file(File(_imagePath!), height: 100),
-              ]
+              ],
+              const SizedBox(height: 10),
+              Text(
+                _locations.isNotEmpty
+                    ? "Seleccionar Ubicaciones:"
+                    : 'Sin ubicaciones disponibles',
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              _buildLocationSelection(),
             ],
           ),
         ),
@@ -197,9 +246,9 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
                   '', // Usa la imagen seleccionada o una cadena vacía
             );
 
-            var response = await widget.friendsStore.addFriend(newFriend);
-            Navigator.of(context).pop();
+            final response = await widget.friendsStore.addFriend(newFriend);
             if (response["success"]) {
+              await _assignLocations(response['id']);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(response["message"]),
@@ -214,6 +263,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
                 ),
               );
             }
+            Navigator.of(context).pop();
           },
           child: const Text("Agregar Amigo"),
         ),
@@ -225,5 +275,63 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         ),
       ],
     );
+  }
+
+  Widget _buildLocationSelection() {
+    return Wrap(
+      spacing: 10.0,
+      runSpacing: 10.0,
+      children: _locations.map((location) {
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (_selectedLocationIds.contains(location.idLocation)) {
+                _selectedLocationIds.remove(location.idLocation);
+              } else {
+                if (_selectedLocationIds.length < 5) {
+                  _selectedLocationIds.add(location.idLocation!);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Solo puedes seleccionar hasta 5 ubicaciones."),
+                    ),
+                  );
+                }
+              }
+            });
+          },
+          child: Card(
+            color: _selectedLocationIds.contains(location.idLocation)
+                ? const Color(0xFF64D0DE)
+                : Colors.grey[300],
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                location.name,
+                style: TextStyle(
+                  color: _selectedLocationIds.contains(location.idLocation)
+                      ? Colors.white
+                      : Colors.black,
+                  fontWeight: _selectedLocationIds.contains(location.idLocation)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Future<void> _assignLocations(int friendId) async {
+    for (var locationId in _selectedLocationIds) {
+      await widget.friendsStore.assignLocation(friendId, locationId);
+    }
   }
 }

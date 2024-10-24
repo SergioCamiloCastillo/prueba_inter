@@ -8,21 +8,25 @@ class FriendsDatasourceLocaldatabaseImpl extends FriendsDatasource {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   @override
-  Future<bool> addFriend(FriendEntity friend) async {
+  Future<Map<String, dynamic>> addFriend(FriendEntity friend) async {
     try {
       final db = await _databaseHelper.database;
-      await db.insert('friends', {
+      final response = await db.insert('friends', {
         'firstName': friend.firstName,
         'lastName': friend.lastName,
         'email': friend.email,
         'phoneNumber': friend.telephone,
         'photoUrl': friend.photo
       });
-      print('Amigo agregado correctamente');
-      return true;
+      print('Amigo agregado correctamente $response');
+      return {
+        "success": true,
+        "message": "Amigo agregado correctamente",
+        "id": response
+      };
     } catch (e) {
       print('Hubo un error al agregar el amigo: $e');
-      return false;
+      return {"success": false, "message": "Hubo un error al agregar el amigo"};
     }
   }
 
@@ -225,17 +229,35 @@ class FriendsDatasourceLocaldatabaseImpl extends FriendsDatasource {
     try {
       final db = await _databaseHelper.database;
 
-      // Consulta para obtener las ubicaciones ocupadas por otros amigos
-      final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      // Consulta condicional dependiendo si friendId es 0 o no
+      String query;
+      List<dynamic> args;
+
+      if (friendId == 0) {
+        // Seleccionar ubicaciones que NO están ocupadas por ningún amigo
+        query = '''
+      SELECT l.*
+      FROM locations l
+      JOIN friend_locations fl ON l.id = fl.locationId;
+      ''';
+        args = []; // No hay argumentos necesarios en este caso
+      } else {
+        // Seleccionar ubicaciones ocupadas por otros amigos
+        query = '''
       SELECT l.* 
       FROM locations l
       JOIN friend_locations fl ON l.id = fl.locationId
       WHERE fl.friendId != ?;
-    ''', [friendId]);
+      ''';
+        args = [friendId]; // Usamos el friendId como argumento
+      }
+
+      // Ejecutar la consulta
+      final List<Map<String, dynamic>> maps = await db.rawQuery(query, args);
 
       // Crear una lista vacía para almacenar las ubicaciones
       List<LocationEntity> locations = [];
-
+      print('lsss Ubicaciones ocupadas: $maps');
       // Usar un bucle for para procesar cada ubicación y esperar a que se resuelva getPhotosForLocation
       for (var map in maps) {
         LocationEntity location = LocationEntity(

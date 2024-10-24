@@ -33,12 +33,9 @@ abstract class _FriendsStore with Store {
     }
 
     try {
-      await friendsRepository.addFriend(friend);
+      final response = await friendsRepository.addFriend(friend);
       await fetchFriends(); // Refrescar la lista después de agregar
-      return {
-        "success": true,
-        "message": "Agregado exitosamente"
-      }; // Operación exitosa
+      return response; // Operación exitosa
     } catch (e) {
       // Manejo de errores
       print("Error al agregar amigo: $e");

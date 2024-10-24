@@ -8,7 +8,7 @@ class FriendsRepositoryImpl extends FriendsRepository {
 
   FriendsRepositoryImpl({required this.datasource});
   @override
-  Future<bool> addFriend(FriendEntity friend) {
+  Future<Map<String, dynamic>> addFriend(FriendEntity friend) {
     return datasource.addFriend(friend);
   }
 

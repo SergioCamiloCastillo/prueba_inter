@@ -34,6 +34,19 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   List<LocationEntity> _locations = [];
   List<LocationEntity> _availableLocations = [];
   final List<int> _selectedLocationIds = [];
+  String? _originalFirstName;
+  String? _originalLastName;
+  String? _originalEmail;
+  String? _originalPhoneNumber;
+  String? _originalImagePath;
+  List<int> _originalSelectedLocationIds = [];
+  // Mapa para manejar mensajes de error
+  final Map<String, String> _errorMessages = {
+    'firstName': '',
+    'lastName': '',
+    'email': '',
+    'phoneNumber': '',
+  };
 
   @override
   void initState() {
@@ -65,6 +78,11 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         emailController.text = friend.email;
         phoneNumberController.text = friend.telephone;
         _imagePath = friend.photo;
+        _originalFirstName = friend.firstName;
+        _originalLastName = friend.lastName;
+        _originalEmail = friend.email;
+        _originalPhoneNumber = friend.telephone;
+        _originalImagePath = friend.photo;
       });
       await _loadFriendLocations();
     } else {
@@ -81,6 +99,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       setState(() {
         _selectedLocationIds
             .addAll(friendLocations.map((location) => location.idLocation!));
+        _originalSelectedLocationIds = List<int>.from(_selectedLocationIds);
       });
     }
   }
@@ -114,7 +133,53 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
     }
   }
 
+  bool _isEmailValid(String email) {
+    // Expresión regular para validar el correo electrónico
+    String pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+    RegExp regex = RegExp(pattern);
+    return regex.hasMatch(email);
+  }
+
   Future<void> _saveFriendDetails() async {
+    // Resetear mensajes de error
+    _errorMessages.forEach((key, value) {
+      _errorMessages[key] = '';
+    });
+
+    // Validar campos
+    if (firstNameController.text.isEmpty) {
+      _errorMessages['firstName'] = 'Este campo es obligatorio';
+    } else {
+      _errorMessages['firstName'] =
+          ''; // Eliminar mensaje de error si es válido
+    }
+
+    if (lastNameController.text.isEmpty) {
+      _errorMessages['lastName'] = 'Este campo es obligatorio';
+    } else {
+      _errorMessages['lastName'] = ''; // Eliminar mensaje de error si es válido
+    }
+    if (emailController.text.isEmpty) {
+      _errorMessages['email'] = 'Este campo es obligatorio';
+    } else if (!_isEmailValid(emailController.text)) {
+      _errorMessages['email'] =
+          'Por favor, introduce un correo electrónico válido';
+    } else {
+      _errorMessages['email'] = ''; // Eliminar mensaje de error si es válido
+    }
+    if (phoneNumberController.text.isEmpty) {
+      _errorMessages['phoneNumber'] = 'Este campo es obligatorio';
+    } else {
+      _errorMessages['phoneNumber'] =
+          ''; // Eliminar mensaje de error si es válido
+    }
+
+    // Si hay errores, actualizar el estado para mostrarlos
+    if (_errorMessages.values.any((msg) => msg.isNotEmpty)) {
+      setState(() {});
+      return; // Detener la ejecución si hay errores
+    }
+
     if (_friend != null) {
       final updatedFriend = FriendEntity(
         idFriend: _friend!.idFriend,
@@ -128,7 +193,15 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       await _friendsStore.updateFriend(updatedFriend);
       await _removeUnselectedLocations();
       await _assignLocations();
-      GoRouter.of(context).replace('/friends');
+
+      // Mostrar mensaje de éxito
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Datos del amigo actualizados correctamente."),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.pop();
     }
   }
 
@@ -140,12 +213,6 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         if (!_selectedLocationIds.contains(location.idLocation)) {
           await _friendsStore.removeLocation(
               _friend!.idFriend!, location.idLocation!);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  "Ubicación ${location.name} eliminada de ${_friend!.firstName}"),
-            ),
-          );
         }
       }
     }
@@ -156,12 +223,25 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       for (var locationId in _selectedLocationIds) {
         await _friendsStore.assignLocation(_friend!.idFriend!, locationId);
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Ubicaciones asignadas a ${_friend!.firstName}"),
-        ),
-      );
     }
+  }
+
+  bool _hasChanges() {
+    return firstNameController.text != _originalFirstName ||
+        lastNameController.text != _originalLastName ||
+        emailController.text != _originalEmail ||
+        phoneNumberController.text != _originalPhoneNumber ||
+        _imagePath != _originalImagePath ||
+        !_listEquals(_selectedLocationIds, _originalSelectedLocationIds);
+  }
+
+  // Función para comparar listas de ubicaciones
+  bool _listEquals(List<int> list1, List<int> list2) {
+    if (list1.length != list2.length) return false;
+    for (var item in list1) {
+      if (!list2.contains(item)) return false;
+    }
+    return true;
   }
 
   @override
@@ -174,51 +254,57 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text("Detalles del Amigo", style: TextStyle(fontSize: 18)),
-      backgroundColor: const Color(0xFFF8F8FA), // Color azul claro
-    ),
-    body: _friend == null
-        ? const Center(
-            child: Text("No hay información disponible sobre este amigo."),
-          )
-        : Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8F8FA), // Color azul claro
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProfileHeader(),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(child: _buildTextField(firstNameController, "Nombre")),
-                      const SizedBox(width: 10), // Espacio entre los campos
-                      Expanded(child: _buildTextField(lastNameController, "Apellido")),
-                    ],
-                  ),
-                  _buildTextField(emailController, "Correo electrónico"),
-                  _buildTextField(phoneNumberController, "Teléfono o celular"),
-                  const SizedBox(height: 20),
-                  const Text("Seleccionar Ubicaciones:",
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  _buildLocationSelection(),
-                  const SizedBox(height: 20),
-                  _buildSaveButton(),
-                ],
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Detalles del Amigo", style: TextStyle(fontSize: 18)),
+        backgroundColor: const Color(0xFFF8F8FA), // Color azul claro
+      ),
+      body: _friend == null
+          ? const Center(
+              child: Text("No hay información disponible sobre este amigo."),
+            )
+          : Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8F8FA), // Color azul claro
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: _buildTextField(
+                                firstNameController, "Nombre", 'firstName')),
+                        const SizedBox(width: 10), // Espacio entre los campos
+                        Expanded(
+                            child: _buildTextField(
+                                lastNameController, "Apellido", 'lastName')),
+                      ],
+                    ),
+                    _buildTextField(
+                        emailController, "Correo electrónico", 'email'),
+                    _buildTextField(phoneNumberController, "Teléfono o celular",
+                        'phoneNumber'),
+                    const SizedBox(height: 20),
+                    const Text("Asignar ubicaciones:",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    _buildLocationSelection(),
+                    const SizedBox(height: 20),
+                    _buildSaveButton(),
+                  ],
+                ),
               ),
             ),
-          ),
-    backgroundColor: Colors.white, // Fondo blanco para mejor contraste
-  );
-}
+      backgroundColor: Colors.white, // Fondo blanco para mejor contraste
+    );
+  }
 
   Widget _buildProfileHeader() {
     return Center(
@@ -284,20 +370,38 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, String key) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelStyle: const TextStyle(color: Color(0xFFA3AEC2)),
-          labelText: label,
-          border: const OutlineInputBorder(),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-                color: Color(0xFFA3AEC2), width: 2.0), // Color azul claro
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            onChanged: (value) {
+              setState(() {});
+            },
+            decoration: InputDecoration(
+              labelStyle: const TextStyle(color: Color(0xFFA3AEC2)),
+              labelText: label,
+              border: const OutlineInputBorder(),
+              focusedBorder: const OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: Color(0xFFA3AEC2), width: 2.0), // Color azul claro
+              ),
+            ),
           ),
-        ),
+          // Muestra el mensaje de error si existe
+          if (_errorMessages[key]!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                _errorMessages[key]!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -357,7 +461,7 @@ Widget build(BuildContext context) {
   Widget _buildSaveButton() {
     return Center(
       child: ElevatedButton(
-        onPressed: _saveFriendDetails,
+        onPressed: _hasChanges() ? _saveFriendDetails : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF111B54), // Color azul claro
           padding: const EdgeInsets.symmetric(
