@@ -41,7 +41,9 @@ class HomeScreen extends StatelessWidget {
               icon: Icons.location_on,
               label: 'Modulo ubicaciones',
               color: Colors.lightBlueAccent,
-              onTap: () {},
+              onTap: ()  {
+                context.push('/locations');
+              },
             ),
           ],
         ),

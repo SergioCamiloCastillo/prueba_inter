@@ -6,6 +6,10 @@ import 'package:prueba_inter/features/friends/infrastructure/datasources/friends
 import 'package:prueba_inter/features/friends/infrastructure/repositories/friends_repository_impl.dart';
 import 'package:prueba_inter/features/friends/presentation/stores/friends_store.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
+import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
+import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
+import 'package:prueba_inter/features/locations/presentation/store/locations_store.dart';
 
 class FriendDetailScreen extends StatefulWidget {
   static const String name = "friend-detail-screen";
@@ -19,30 +23,41 @@ class FriendDetailScreen extends StatefulWidget {
 
 class _FriendDetailScreenState extends State<FriendDetailScreen> {
   late FriendsStore _friendsStore;
+  late LocationsStore _locationsStore;
   FriendEntity? _friend;
 
-  // Controladores de texto para editar la información del amigo
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
   String? _imagePath;
+  List<LocationEntity> _locations = [];
+  List<LocationEntity> _availableLocations =
+      []; // Lista de ubicaciones disponibles para seleccionar
+  final List<int> _selectedLocationIds =
+      []; // Lista de IDs de ubicaciones seleccionadas
 
   @override
   void initState() {
     super.initState();
-
-    // Instanciar manualmente el datasource, repositorio y el store
-    final datasource = FriendsDatasourceLocaldatabaseImpl();
-    final repository = FriendsRepositoryImpl(datasource: datasource);
-    _friendsStore = FriendsStore(repository);
-
-    // Cargar los detalles del amigo
+    _initializeStores();
     _loadFriendDetails();
+    _loadLocations(); // Cargar ubicaciones al iniciar
+  }
+
+  void _initializeStores() {
+    final friendsDatasource = FriendsDatasourceLocaldatabaseImpl();
+    final friendsRepository =
+        FriendsRepositoryImpl(datasource: friendsDatasource);
+    _friendsStore = FriendsStore(friendsRepository);
+
+    final locationsDatasource = LocationsDatasourceLocaldatabaseImpl();
+    final locationsRepository =
+        LocationsRepositoryImpl(datasource: locationsDatasource);
+    _locationsStore = LocationsStore(locationsRepository);
   }
 
   Future<void> _loadFriendDetails() async {
-    // Cambiar getFriendById a un método que devuelva Future<FriendEntity?>
     final friend = await _friendsStore.getFriendById(widget.idFriend);
     if (friend != null) {
       setState(() {
@@ -53,11 +68,43 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         phoneNumberController.text = friend.telephone;
         _imagePath = friend.photo; // Cargar la foto del amigo si existe
       });
+      // Cargar las ubicaciones del amigo
+      await _loadFriendLocations(); // Cargar ubicaciones del amigo
     } else {
       setState(() {
         _friend = null; // Establece _friend en null si no se encuentra
       });
     }
+  }
+
+  Future<void> _loadFriendLocations() async {
+    if (_friend != null) {
+      // Obtener ubicaciones asociadas al amigo
+      List<LocationEntity> friendLocations =
+          await _friendsStore.fetchLocationsByFriend(_friend!.idFriend!);
+      setState(() {
+        // Obtener solo los IDs de las ubicaciones
+        _selectedLocationIds
+            .addAll(friendLocations.map((location) => location.idLocation!));
+      });
+    }
+  }
+
+  Future<void> _loadLocations() async {
+    // Cargar todas las ubicaciones de la base de datos
+    List<LocationEntity> allLocations = await _locationsStore.fetchLocations();
+    List<LocationEntity> occupiedLocations = await _friendsStore
+        .fetchOccupiedLocationsExcludingFriend(widget.idFriend);
+
+    // Filtrar ubicaciones ocupadas
+    _availableLocations = allLocations
+        .where((location) => !occupiedLocations
+            .any((occupied) => occupied.idLocation == location.idLocation))
+        .toList();
+
+    setState(() {
+      _locations = _availableLocations; // Asigna solo ubicaciones disponibles
+    });
   }
 
   Future<void> _pickImage() async {
@@ -72,7 +119,6 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         });
       }
     } catch (e) {
-      // Manejo de errores
       print("Error al seleccionar imagen: $e");
     }
   }
@@ -85,20 +131,52 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         lastName: lastNameController.text,
         email: emailController.text,
         telephone: phoneNumberController.text,
-        photo: _imagePath ??
-            _friend!
-                .photo, // Mantener la foto existente si no se selecciona una nueva
+        photo: _imagePath ?? _friend!.photo,
       );
 
-      // Actualizar el amigo en el store
       await _friendsStore.updateFriend(updatedFriend);
-      GoRouter.of(context).replace('/friends'); // Volver a la pantalla anterior
+      await _removeUnselectedLocations(); // Eliminar ubicaciones no seleccionadas al guardar
+      await _assignLocations(); // Asignar las ubicaciones aquí
+      GoRouter.of(context).replace('/friends');
+    }
+  }
+
+  Future<void> _removeUnselectedLocations() async {
+    if (_friend != null) {
+      // Obtener ubicaciones actuales asociadas al amigo
+      List<LocationEntity> friendLocations =
+          await _friendsStore.fetchLocationsByFriend(_friend!.idFriend!);
+
+      for (var location in friendLocations) {
+        if (!_selectedLocationIds.contains(location.idLocation)) {
+          await _friendsStore.removeLocation(
+              _friend!.idFriend!, location.idLocation!);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  "Ubicación ${location.name} eliminada de ${_friend!.firstName}"),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _assignLocations() async {
+    if (_friend != null && _selectedLocationIds.isNotEmpty) {
+      for (var locationId in _selectedLocationIds) {
+        await _friendsStore.assignLocation(_friend!.idFriend!, locationId);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Ubicaciones asignadas a ${_friend!.firstName}"),
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
-    // Limpiar los controladores de texto cuando se elimine la pantalla
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
@@ -118,44 +196,19 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: firstNameController,
-                    decoration: const InputDecoration(labelText: "Nombre"),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: lastNameController,
-                    decoration: const InputDecoration(labelText: "Apellido"),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: emailController,
-                    decoration: const InputDecoration(labelText: "Email"),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: phoneNumberController,
-                    decoration: const InputDecoration(labelText: "Teléfono"),
-                  ),
+                  _buildTextField(firstNameController, "Nombre"),
+                  _buildTextField(lastNameController, "Apellido"),
+                  _buildTextField(emailController, "Email"),
+                  _buildTextField(phoneNumberController, "Teléfono"),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: const Text("Seleccionar Imagen"),
-                  ),
+                  _buildImagePicker(),
+                  const SizedBox(height: 20),
+                  const Text("Seleccionar Ubicaciones:",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  _imagePath != null &&
-                          _imagePath!.isNotEmpty &&
-                          File(_imagePath!).existsSync()
-                      ? Container(
-                          margin: const EdgeInsets.symmetric(vertical: 10),
-                          child: Image.file(
-                            File(_imagePath!), // Mostrar la imagen seleccionada
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : const Text("No se ha seleccionado ninguna imagen"),
+                  _buildLocationSelection(), // Método para construir la selección de ubicaciones
+
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: _saveFriendDetails,
@@ -164,6 +217,91 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: _pickImage,
+          child: const Text("Seleccionar Imagen"),
+        ),
+        const SizedBox(height: 10),
+        _imagePath != null &&
+                _imagePath!.isNotEmpty &&
+                File(_imagePath!).existsSync()
+            ? Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                child: Image.file(
+                  File(_imagePath!),
+                  height: 100,
+                  width: 100,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : const Text("No se ha seleccionado ninguna imagen"),
+      ],
+    );
+  }
+
+  Widget _buildLocationSelection() {
+    return Wrap(
+      spacing: 10.0,
+      runSpacing: 10.0,
+      children: _locations.map((location) {
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (_selectedLocationIds.contains(location.idLocation)) {
+                // Si la ubicación ya está seleccionada, simplemente la deselecciona
+                _selectedLocationIds.remove(location.idLocation);
+              } else {
+                if (_selectedLocationIds.length < 5) {
+                  _selectedLocationIds.add(location.idLocation!);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Solo puedes seleccionar hasta 5 ubicaciones."),
+                    ),
+                  );
+                }
+              }
+            });
+          },
+          child: Card(
+            color: _selectedLocationIds.contains(location.idLocation)
+                ? Colors.blueAccent
+                : Colors.grey[300],
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                location.name,
+                style: TextStyle(
+                  color: _selectedLocationIds.contains(location.idLocation)
+                      ? Colors.white
+                      : Colors.black,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

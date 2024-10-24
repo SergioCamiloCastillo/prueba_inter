@@ -1,6 +1,7 @@
 import 'package:mobx/mobx.dart';
 import 'package:prueba_inter/features/friends/domain/entities/friend_entity.dart';
 import 'package:prueba_inter/features/friends/domain/repositories/friends_repository.dart';
+import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
 
 part 'friends_store.g.dart';
 
@@ -86,8 +87,47 @@ abstract class _FriendsStore with Store {
   }
 
   @action
+  Future<List<LocationEntity>> fetchLocationsByFriend(int friendId) async {
+    try {
+      List<LocationEntity> locations =
+          await friendsRepository.getLocationsByFriend(friendId);
+
+      return locations;
+    } catch (e) {
+      print("Error al obtener ubicaciones del amigo: $e");
+      return [];
+    }
+  }
+
+  @action
+  Future<List<LocationEntity>> fetchOccupiedLocationsExcludingFriend(
+      int friendId) async {
+    try {
+      List<LocationEntity> locations =
+          await friendsRepository.getLocationsOcupped(friendId);
+
+      return locations;
+    } catch (e) {
+      print("Error al obtener ubicaciones del amigo: $e");
+      return [];
+    }
+  }
+
+  @action
   Future<void> assignLocation(int friendId, int locationId) async {
     await friendsRepository.assignLocationToFriend(friendId, locationId);
     await fetchFriends(); // Refrescar la lista después de la asignación
+  }
+
+  @action
+  Future<bool> removeLocation(int friendId, int locationId) async {
+    try {
+      await friendsRepository.deleteLocationByFriend(friendId, locationId);
+
+      return true;
+    } catch (e) {
+      print("Error al obtener ubicaciones del amigo: $e");
+      return false;
+    }
   }
 }

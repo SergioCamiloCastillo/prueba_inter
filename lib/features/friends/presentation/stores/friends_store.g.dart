@@ -41,12 +41,37 @@ mixin _$FriendsStore on _FriendsStore, Store {
     return _$addFriendAsyncAction.run(() => super.addFriend(friend));
   }
 
+  late final _$updateFriendAsyncAction =
+      AsyncAction('_FriendsStore.updateFriend', context: context);
+
+  @override
+  Future<void> updateFriend(FriendEntity friend) {
+    return _$updateFriendAsyncAction.run(() => super.updateFriend(friend));
+  }
+
   late final _$deleteFriendAsyncAction =
       AsyncAction('_FriendsStore.deleteFriend', context: context);
 
   @override
   Future<bool> deleteFriend(int idFriend) {
     return _$deleteFriendAsyncAction.run(() => super.deleteFriend(idFriend));
+  }
+
+  late final _$getFriendByIdAsyncAction =
+      AsyncAction('_FriendsStore.getFriendById', context: context);
+
+  @override
+  Future<FriendEntity?> getFriendById(int idFriend) {
+    return _$getFriendByIdAsyncAction.run(() => super.getFriendById(idFriend));
+  }
+
+  late final _$fetchLocationsByFriendAsyncAction =
+      AsyncAction('_FriendsStore.fetchLocationsByFriend', context: context);
+
+  @override
+  Future<List<LocationEntity>> fetchLocationsByFriend(int friendId) {
+    return _$fetchLocationsByFriendAsyncAction
+        .run(() => super.fetchLocationsByFriend(friendId));
   }
 
   late final _$assignLocationAsyncAction =

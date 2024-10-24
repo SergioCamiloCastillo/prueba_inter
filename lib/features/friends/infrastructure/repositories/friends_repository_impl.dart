@@ -26,9 +26,24 @@ class FriendsRepositoryImpl extends FriendsRepository {
   Future<void> assignLocationToFriend(int friendId, int location) {
     return datasource.assignLocationToFriend(friendId, location);
   }
-  
+
   @override
   Future<bool> updateFriend(FriendEntity friend) {
     return datasource.updateFriend(friend);
+  }
+
+  @override
+  Future<List<LocationEntity>> getLocationsByFriend(int friendId) {
+    return datasource.getLocationsByFriend(friendId);
+  }
+
+  @override
+  Future<bool> deleteLocationByFriend(int friendId, int locationId) {
+    return datasource.deleteLocationByFriend(friendId, locationId);
+  }
+  
+  @override
+  Future<List<LocationEntity>> getLocationsOcupped(int friendId) {
+    return datasource.getLocationsOcupped(friendId);
   }
 }

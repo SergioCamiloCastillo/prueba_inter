@@ -1,3 +1,4 @@
+import 'dart:convert'; // Para usar jsonEncode
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -18,6 +19,8 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB() async {
+    //await deleteDatabase(join(await getDatabasesPath(), 'app_database.db'));
+
     return await openDatabase(
       join(await getDatabasesPath(), 'app_database.db'),
       version: 1,
@@ -55,7 +58,68 @@ class DatabaseHelper {
             FOREIGN KEY (locationId) REFERENCES locations(id) ON DELETE CASCADE
           )
         ''');
+
+        // Crear la tabla de fotos
+        await db.execute('''
+          CREATE TABLE photos(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            locationId INTEGER,
+            url TEXT,
+            FOREIGN KEY (locationId) REFERENCES locations(id) ON DELETE CASCADE
+          )
+        ''');
       },
     );
+  }
+
+  // Método para agregar una ubicación
+  Future<void> insertLocation(String name, String description, double latitude,
+      double longitude, List<String> photos) async {
+    final db = await database;
+
+    // Convertir fotos a JSON
+    String photosJson = jsonEncode(photos);
+
+    await db.insert('locations', {
+      'name': name,
+      'description': description,
+      'latitude': latitude,
+      'longitude': longitude,
+      'photos': photosJson,
+    });
+  }
+
+  // Método para obtener todas las ubicaciones
+  Future<List<Map<String, dynamic>>> getLocations() async {
+    final db = await database;
+    return await db.query('locations');
+  }
+
+  // Método para eliminar una ubicación
+  Future<void> deleteLocation(int id) async {
+    final db = await database;
+    await db.delete('locations', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Método para agregar fotos a una ubicación
+  Future<void> insertPhoto(int locationId, String url) async {
+    final db = await database;
+    await db.insert('photos', {
+      'locationId': locationId,
+      'url': url,
+    });
+  }
+
+  // Método para obtener fotos de una ubicación
+  Future<List<Map<String, dynamic>>> getPhotos(int locationId) async {
+    final db = await database;
+    return await db
+        .query('photos', where: 'locationId = ?', whereArgs: [locationId]);
+  }
+
+  // Método para eliminar fotos de una ubicación
+  Future<void> deletePhoto(int id) async {
+    final db = await database;
+    await db.delete('photos', where: 'id = ?', whereArgs: [id]);
   }
 }

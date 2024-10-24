@@ -71,16 +71,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
       body: Observer(
         builder: (_) {
           if (_friendsStore.friends.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: Text("No hay amigos."));
           }
           return ListView.builder(
             itemCount: _friendsStore.friends.length,
             itemBuilder: (context, index) {
               final friend = _friendsStore.friends[index];
               return GestureDetector(
-                onTap: () => GoRouter.of(context).push('/friend/${friend.idFriend}'),
+                onTap: () =>
+                    GoRouter.of(context).push('/friend/${friend.idFriend}'),
                 child: Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: ListTile(
                     leading: friend.photo.isNotEmpty
                         ? CircleAvatar(
@@ -113,7 +115,8 @@ class AddFriendDialog extends StatefulWidget {
   final Function(String) onImagePicked;
   final FriendsStore friendsStore;
 
-  const AddFriendDialog({required this.onImagePicked, required this.friendsStore, super.key});
+  const AddFriendDialog(
+      {required this.onImagePicked, required this.friendsStore, super.key});
 
   @override
   _AddFriendDialogState createState() => _AddFriendDialogState();
@@ -129,12 +132,13 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       setState(() {
         _imagePath = image.path; // Almacena la ruta de la imagen seleccionada
       });
-      widget.onImagePicked(image.path); // Llama a la función para actualizar la imagen
+      widget.onImagePicked(
+          image.path); // Llama a la función para actualizar la imagen
     }
   }
 
@@ -165,7 +169,8 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
               const SizedBox(height: 10),
               TextField(
                 controller: phoneNumberController,
-                decoration: const InputDecoration(labelText: "Número de Teléfono"),
+                decoration:
+                    const InputDecoration(labelText: "Número de Teléfono"),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
@@ -188,13 +193,13 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
               lastName: lastNameController.text,
               email: emailController.text,
               telephone: phoneNumberController.text,
-              photo: _imagePath ?? '', // Usa la imagen seleccionada o una cadena vacía
+              photo: _imagePath ??
+                  '', // Usa la imagen seleccionada o una cadena vacía
             );
 
             var response = await widget.friendsStore.addFriend(newFriend);
-             Navigator.of(context).pop();
+            Navigator.of(context).pop();
             if (response["success"]) {
-             
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(response["message"]),
