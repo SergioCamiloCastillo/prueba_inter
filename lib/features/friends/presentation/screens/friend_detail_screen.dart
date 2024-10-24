@@ -1,11 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:prueba_inter/features/friends/domain/entities/friend_entity.dart';
 import 'package:prueba_inter/features/friends/infrastructure/datasources/friends_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/friends/infrastructure/repositories/friends_repository_impl.dart';
 import 'package:prueba_inter/features/friends/presentation/stores/friends_store.dart';
-import 'package:go_router/go_router.dart';
 import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
 import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
@@ -32,17 +32,15 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   final TextEditingController phoneNumberController = TextEditingController();
   String? _imagePath;
   List<LocationEntity> _locations = [];
-  List<LocationEntity> _availableLocations =
-      []; // Lista de ubicaciones disponibles para seleccionar
-  final List<int> _selectedLocationIds =
-      []; // Lista de IDs de ubicaciones seleccionadas
+  List<LocationEntity> _availableLocations = [];
+  final List<int> _selectedLocationIds = [];
 
   @override
   void initState() {
     super.initState();
     _initializeStores();
     _loadFriendDetails();
-    _loadLocations(); // Cargar ubicaciones al iniciar
+    _loadLocations();
   }
 
   void _initializeStores() {
@@ -66,24 +64,21 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         lastNameController.text = friend.lastName;
         emailController.text = friend.email;
         phoneNumberController.text = friend.telephone;
-        _imagePath = friend.photo; // Cargar la foto del amigo si existe
+        _imagePath = friend.photo;
       });
-      // Cargar las ubicaciones del amigo
-      await _loadFriendLocations(); // Cargar ubicaciones del amigo
+      await _loadFriendLocations();
     } else {
       setState(() {
-        _friend = null; // Establece _friend en null si no se encuentra
+        _friend = null;
       });
     }
   }
 
   Future<void> _loadFriendLocations() async {
     if (_friend != null) {
-      // Obtener ubicaciones asociadas al amigo
       List<LocationEntity> friendLocations =
           await _friendsStore.fetchLocationsByFriend(_friend!.idFriend!);
       setState(() {
-        // Obtener solo los IDs de las ubicaciones
         _selectedLocationIds
             .addAll(friendLocations.map((location) => location.idLocation!));
       });
@@ -91,19 +86,17 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   }
 
   Future<void> _loadLocations() async {
-    // Cargar todas las ubicaciones de la base de datos
     List<LocationEntity> allLocations = await _locationsStore.fetchLocations();
     List<LocationEntity> occupiedLocations = await _friendsStore
         .fetchOccupiedLocationsExcludingFriend(widget.idFriend);
 
-    // Filtrar ubicaciones ocupadas
     _availableLocations = allLocations
         .where((location) => !occupiedLocations
             .any((occupied) => occupied.idLocation == location.idLocation))
         .toList();
 
     setState(() {
-      _locations = _availableLocations; // Asigna solo ubicaciones disponibles
+      _locations = _availableLocations;
     });
   }
 
@@ -111,11 +104,9 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
       if (image != null) {
         setState(() {
-          _imagePath =
-              image.path; // Actualizar la ruta de la imagen seleccionada
+          _imagePath = image.path;
         });
       }
     } catch (e) {
@@ -135,18 +126,16 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       );
 
       await _friendsStore.updateFriend(updatedFriend);
-      await _removeUnselectedLocations(); // Eliminar ubicaciones no seleccionadas al guardar
-      await _assignLocations(); // Asignar las ubicaciones aquí
+      await _removeUnselectedLocations();
+      await _assignLocations();
       GoRouter.of(context).replace('/friends');
     }
   }
 
   Future<void> _removeUnselectedLocations() async {
     if (_friend != null) {
-      // Obtener ubicaciones actuales asociadas al amigo
       List<LocationEntity> friendLocations =
           await _friendsStore.fetchLocationsByFriend(_friend!.idFriend!);
-
       for (var location in friendLocations) {
         if (!_selectedLocationIds.contains(location.idLocation)) {
           await _friendsStore.removeLocation(
@@ -185,76 +174,131 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Detalles del Amigo")),
-      body: _friend == null
-          ? const Center(
-              child: Text("No hay información disponible sobre este amigo."))
-          : SingleChildScrollView(
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text("Detalles del Amigo", style: TextStyle(fontSize: 18)),
+      backgroundColor: const Color(0xFFF8F8FA), // Color azul claro
+    ),
+    body: _friend == null
+        ? const Center(
+            child: Text("No hay información disponible sobre este amigo."),
+          )
+        : Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F8FA), // Color azul claro
+            ),
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField(firstNameController, "Nombre"),
-                  _buildTextField(lastNameController, "Apellido"),
-                  _buildTextField(emailController, "Email"),
-                  _buildTextField(phoneNumberController, "Teléfono"),
+                  _buildProfileHeader(),
                   const SizedBox(height: 20),
-                  _buildImagePicker(),
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField(firstNameController, "Nombre")),
+                      const SizedBox(width: 10), // Espacio entre los campos
+                      Expanded(child: _buildTextField(lastNameController, "Apellido")),
+                    ],
+                  ),
+                  _buildTextField(emailController, "Correo electrónico"),
+                  _buildTextField(phoneNumberController, "Teléfono o celular"),
                   const SizedBox(height: 20),
                   const Text("Seleccionar Ubicaciones:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  _buildLocationSelection(), // Método para construir la selección de ubicaciones
-
+                  _buildLocationSelection(),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _saveFriendDetails,
-                    child: const Text("Guardar Cambios"),
-                  ),
+                  _buildSaveButton(),
                 ],
               ),
             ),
+          ),
+    backgroundColor: Colors.white, // Fondo blanco para mejor contraste
+  );
+}
+
+  Widget _buildProfileHeader() {
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                ClipOval(
+                  child: SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: _imagePath != null &&
+                            _imagePath!.isNotEmpty &&
+                            File(_imagePath!).existsSync()
+                        ? Image.file(
+                            File(_imagePath!),
+                            fit: BoxFit.cover,
+                          )
+                        : const Icon(
+                            Icons.person,
+                            size: 100,
+                            color: Colors.grey,
+                          ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF64D0DE), // Color azul claro
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _friend?.firstName ?? 'Nombre',
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            _friend?.lastName ?? 'Apellido',
+            style: const TextStyle(fontSize: 18, color: Color(0xFFA3AEC2)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Toca la imagen para cambiarla",
+            style: TextStyle(fontSize: 12, color: Color(0xFFA3AEC2)),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildTextField(TextEditingController controller, String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: TextField(
         controller: controller,
         decoration: InputDecoration(
+          labelStyle: const TextStyle(color: Color(0xFFA3AEC2)),
           labelText: label,
           border: const OutlineInputBorder(),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(
+                color: Color(0xFFA3AEC2), width: 2.0), // Color azul claro
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildImagePicker() {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: _pickImage,
-          child: const Text("Seleccionar Imagen"),
-        ),
-        const SizedBox(height: 10),
-        _imagePath != null &&
-                _imagePath!.isNotEmpty &&
-                File(_imagePath!).existsSync()
-            ? Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                child: Image.file(
-                  File(_imagePath!),
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
-                ),
-              )
-            : const Text("No se ha seleccionado ninguna imagen"),
-      ],
     );
   }
 
@@ -267,7 +311,6 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
           onTap: () {
             setState(() {
               if (_selectedLocationIds.contains(location.idLocation)) {
-                // Si la ubicación ya está seleccionada, simplemente la deselecciona
                 _selectedLocationIds.remove(location.idLocation);
               } else {
                 if (_selectedLocationIds.length < 5) {
@@ -285,9 +328,12 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
           },
           child: Card(
             color: _selectedLocationIds.contains(location.idLocation)
-                ? Colors.blueAccent
+                ? const Color(0xFF64D0DE)
                 : Colors.grey[300],
-            elevation: 4,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
@@ -296,12 +342,34 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                   color: _selectedLocationIds.contains(location.idLocation)
                       ? Colors.white
                       : Colors.black,
+                  fontWeight: _selectedLocationIds.contains(location.idLocation)
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                 ),
               ),
             ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return Center(
+      child: ElevatedButton(
+        onPressed: _saveFriendDetails,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF111B54), // Color azul claro
+          padding: const EdgeInsets.symmetric(
+              horizontal: 32, vertical: 10), // Padding del botón
+          textStyle: const TextStyle(fontSize: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Bordes redondeados
+          ),
+        ),
+        child: const Text("Guardar Cambios",
+            style: TextStyle(color: Colors.white, fontSize: 15)),
+      ),
     );
   }
 }
