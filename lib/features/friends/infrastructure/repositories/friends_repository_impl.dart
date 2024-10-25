@@ -13,7 +13,8 @@ class FriendsRepositoryImpl extends FriendsRepository {
   }
 
   @override
-  Future<bool> deleteFriend(int idFriend) {
+  Future<bool> deleteFriend(int idFriend) async {
+    await datasource.deleteFriendLocation(idFriend);
     return datasource.deleteFriend(idFriend);
   }
 

@@ -7,4 +7,5 @@ abstract class LocationsDatasource {
   Future<void> updateLocation(LocationEntity location);
   Future<LocationEntity?> getLocationById(int idLocation);
   Future<List<String>> getPhotosForLocation(int idLocation);
+  Future<void> deleteLocationFriend(int locationId);
 }

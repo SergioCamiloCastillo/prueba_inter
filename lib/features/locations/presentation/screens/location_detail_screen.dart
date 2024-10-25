@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart'; // Asegúrate de importar esto
 import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
 import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
@@ -30,8 +32,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
     location = await repository.getLocationById(widget.idLocation);
 
     setState(() {
-      isLoading =
-          false; // Cambiar el estado una vez que se haya cargado la ubicación
+      isLoading = false;
     });
   }
 
@@ -39,9 +40,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
-        body: Center(
-            child:
-                CircularProgressIndicator()), // Mostrar un indicador de carga
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -50,14 +49,14 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
         body: Center(
           child:
               Text("Ubicación no encontrada.", style: TextStyle(fontSize: 18)),
-        ), // Manejar el caso de ubicación no encontrada
+        ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(location!.name),
-        backgroundColor: const Color(0xFF64D0DE), // Color más bonito
+        backgroundColor: const Color(0xFF64D0DE),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -65,7 +64,6 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Descripción de la ubicación
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -76,18 +74,13 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Text('Descripción: ',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text(
-                            location!.description ??
-                                "Descripción no disponible",
-                            style: const TextStyle(fontSize: 17),
-                          ),
-                        ],
-                      ),
+                      if (location != null && location!.description!.isNotEmpty)
+                        _labelCard(
+                            label: "Descripción:",
+                            value: location!.description!),
+                      if (location != null && location!.location.isNotEmpty)
+                        _labelCard(
+                            label: "Ubicación", value: location!.location),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -116,12 +109,47 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
               ),
               const SizedBox(height: 20),
               const Text(
+                'Mapa:',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 150, // Altura del mapa
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter:
+                        LatLng(location!.latitude, location!.longitude),
+                    initialZoom: 16.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point:
+                              LatLng(location!.latitude, location!.longitude),
+                          child: const Icon(
+                            Icons.location_pin,
+                            size: 40,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
                 'Fotos:',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               if (location!.photos.isNotEmpty) ...[
-                // Muestra las imágenes si hay alguna
                 GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
@@ -142,8 +170,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 1,
                               blurRadius: 7,
-                              offset: const Offset(
-                                  0, 3), // changes position of shadow
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -163,6 +190,37 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _labelCard extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _labelCard({super.key, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label ',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 17),
+            softWrap: true,
+            overflow: TextOverflow.visible,
+          ),
+        ),
+      ],
     );
   }
 }

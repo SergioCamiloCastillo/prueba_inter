@@ -1,4 +1,3 @@
-import 'dart:convert'; // Para usar jsonEncode
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -25,18 +24,18 @@ class DatabaseHelper {
       join(await getDatabasesPath(), 'app_database.db'),
       version: 1,
       onCreate: (db, version) async {
-        // Crear la tabla de locations
         await db.execute('''
           CREATE TABLE locations(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE,
+            name TEXT,
             latitude REAL,
             longitude REAL,
-            description TEXT
+            description TEXT,
+            location TEXT,
+            UNIQUE(name, latitude, longitude)
           )
         ''');
 
-        // Crear la tabla de friends
         await db.execute('''
           CREATE TABLE friends(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +47,6 @@ class DatabaseHelper {
           )
         ''');
 
-        // Crear la tabla intermedia friend_locations
         await db.execute('''
           CREATE TABLE friend_locations(
             friendId INTEGER,
@@ -59,7 +57,6 @@ class DatabaseHelper {
           )
         ''');
 
-        // Crear la tabla de fotos
         await db.execute('''
           CREATE TABLE photos(
             id INTEGER PRIMARY KEY AUTOINCREMENT,

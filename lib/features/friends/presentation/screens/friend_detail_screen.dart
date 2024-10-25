@@ -40,7 +40,6 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   String? _originalPhoneNumber;
   String? _originalImagePath;
   List<int> _originalSelectedLocationIds = [];
-  // Mapa para manejar mensajes de error
   final Map<String, String> _errorMessages = {
     'firstName': '',
     'lastName': '',
@@ -134,30 +133,27 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
   }
 
   bool _isEmailValid(String email) {
-    // Expresión regular para validar el correo electrónico
     String pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
     RegExp regex = RegExp(pattern);
     return regex.hasMatch(email);
   }
 
   Future<void> _saveFriendDetails() async {
-    // Resetear mensajes de error
     _errorMessages.forEach((key, value) {
       _errorMessages[key] = '';
     });
 
-    // Validar campos
     if (firstNameController.text.isEmpty) {
       _errorMessages['firstName'] = 'Este campo es obligatorio';
     } else {
       _errorMessages['firstName'] =
-          ''; // Eliminar mensaje de error si es válido
+          ''; 
     }
 
     if (lastNameController.text.isEmpty) {
       _errorMessages['lastName'] = 'Este campo es obligatorio';
     } else {
-      _errorMessages['lastName'] = ''; // Eliminar mensaje de error si es válido
+      _errorMessages['lastName'] = '';
     }
     if (emailController.text.isEmpty) {
       _errorMessages['email'] = 'Este campo es obligatorio';
@@ -165,19 +161,18 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       _errorMessages['email'] =
           'Por favor, introduce un correo electrónico válido';
     } else {
-      _errorMessages['email'] = ''; // Eliminar mensaje de error si es válido
+      _errorMessages['email'] = ''; 
     }
     if (phoneNumberController.text.isEmpty) {
       _errorMessages['phoneNumber'] = 'Este campo es obligatorio';
     } else {
       _errorMessages['phoneNumber'] =
-          ''; // Eliminar mensaje de error si es válido
+          ''; 
     }
 
-    // Si hay errores, actualizar el estado para mostrarlos
     if (_errorMessages.values.any((msg) => msg.isNotEmpty)) {
       setState(() {});
-      return; // Detener la ejecución si hay errores
+      return; 
     }
 
     if (_friend != null) {
@@ -194,14 +189,13 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       await _removeUnselectedLocations();
       await _assignLocations();
 
-      // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Datos del amigo actualizados correctamente."),
           backgroundColor: Colors.green,
         ),
       );
-      context.pop();
+      context.pop(true);
     }
   }
 
@@ -235,7 +229,6 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
         !_listEquals(_selectedLocationIds, _originalSelectedLocationIds);
   }
 
-  // Función para comparar listas de ubicaciones
   bool _listEquals(List<int> list1, List<int> list2) {
     if (list1.length != list2.length) return false;
     for (var item in list1) {
@@ -258,7 +251,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalles del Amigo", style: TextStyle(fontSize: 18)),
-        backgroundColor: const Color(0xFFF8F8FA), // Color azul claro
+        backgroundColor: const Color(0xFFF8F8FA), 
       ),
       body: _friend == null
           ? const Center(
@@ -266,7 +259,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
             )
           : Container(
               decoration: const BoxDecoration(
-                color: Color(0xFFF8F8FA), // Color azul claro
+                color: Color(0xFFF8F8FA), 
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
@@ -280,7 +273,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                         Expanded(
                             child: _buildTextField(
                                 firstNameController, "Nombre", 'firstName')),
-                        const SizedBox(width: 10), // Espacio entre los campos
+                        const SizedBox(width: 10),
                         Expanded(
                             child: _buildTextField(
                                 lastNameController, "Apellido", 'lastName')),
@@ -291,8 +284,11 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                     _buildTextField(phoneNumberController, "Teléfono o celular",
                         'phoneNumber'),
                     const SizedBox(height: 20),
-                    const Text("Asignar ubicaciones:",
-                        style: TextStyle(
+                    Text(
+                        _locations.isNotEmpty
+                            ? "Asignar ubicaciones:"
+                            : "Sin ubicaciones disponibles",
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     _buildLocationSelection(),
@@ -302,7 +298,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                 ),
               ),
             ),
-      backgroundColor: Colors.white, // Fondo blanco para mejor contraste
+      backgroundColor: Colors.white,
     );
   }
 
@@ -340,7 +336,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF64D0DE), // Color azul claro
+                      color: Color(0xFF64D0DE), 
                     ),
                     child: const Icon(
                       Icons.camera_alt,
@@ -388,11 +384,10 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
               border: const OutlineInputBorder(),
               focusedBorder: const OutlineInputBorder(
                 borderSide: BorderSide(
-                    color: Color(0xFFA3AEC2), width: 2.0), // Color azul claro
+                    color: Color(0xFFA3AEC2), width: 2.0),
               ),
             ),
           ),
-          // Muestra el mensaje de error si existe
           if (_errorMessages[key]!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
@@ -463,12 +458,12 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       child: ElevatedButton(
         onPressed: _hasChanges() ? _saveFriendDetails : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF111B54), // Color azul claro
+          backgroundColor: const Color(0xFF111B54), 
           padding: const EdgeInsets.symmetric(
-              horizontal: 32, vertical: 10), // Padding del botón
+              horizontal: 32, vertical: 10), 
           textStyle: const TextStyle(fontSize: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), // Bordes redondeados
+            borderRadius: BorderRadius.circular(20), 
           ),
         ),
         child: const Text("Guardar Cambios",

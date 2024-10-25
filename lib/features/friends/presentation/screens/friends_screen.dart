@@ -25,6 +25,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
   late LocationsStore _locationsStore;
   String? _imagePath;
   final List<LocationEntity> _availableLocations = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -33,7 +35,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final friendsRepository =
         FriendsRepositoryImpl(datasource: friendsDatasource);
     _friendsStore = FriendsStore(friendsRepository);
-    _friendsStore.fetchFriends(); // Carga los amigos al iniciar la pantalla
+    _friendsStore.fetchFriends(); 
 
     final locationsDatasource = LocationsDatasourceLocaldatabaseImpl();
     final locationsRepository =
@@ -48,7 +50,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         return AddFriendDialog(
           onImagePicked: (String path) {
             setState(() {
-              _imagePath = path; // Actualiza la imagen seleccionada
+              _imagePath = path; 
             });
           },
           friendsStore: _friendsStore,
@@ -77,43 +79,115 @@ class _FriendsScreenState extends State<FriendsScreen> {
     }
   }
 
+  List<FriendEntity> _filterFriends(List<FriendEntity> friends) {
+    if (_searchQuery.isEmpty) {
+      return friends;
+    } else {
+      return friends
+          .where((friend) =>
+              friend.firstName
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()) ||
+              friend.lastName
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
+          .toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Amigos")),
-      body: Observer(
-        builder: (_) {
-          if (_friendsStore.friends.isEmpty) {
-            return const Center(child: Text("No hay amigos."));
-          }
-          return ListView.builder(
-            itemCount: _friendsStore.friends.length,
-            itemBuilder: (context, index) {
-              final friend = _friendsStore.friends[index];
-              return GestureDetector(
-                onTap: () =>
-                    GoRouter.of(context).push('/friend/${friend.idFriend}'),
-                child: Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: ListTile(
-                    leading: friend.photo.isNotEmpty
-                        ? CircleAvatar(
-                            backgroundImage: FileImage(File(friend.photo)),
-                          )
-                        : const CircleAvatar(child: Icon(Icons.person)),
-                    title: Text('${friend.firstName} ${friend.lastName}'),
-                    subtitle: Text(friend.email),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteFriend(friend.idFriend!),
-                    ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white, 
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3), 
                   ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Buscar por nombre',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  prefixIcon: Icon(Icons.search,
+                      color: Colors.grey), 
+                  border: InputBorder.none, 
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ),
+          Expanded(
+            child: Observer(
+              builder: (_) {
+                if (_friendsStore.friends.isEmpty) {
+                  return const Center(child: Text("No hay amigos."));
+                }
+
+                final filteredFriends = _filterFriends(_friendsStore.friends);
+
+                if (filteredFriends.isEmpty) {
+                  return const Center(
+                      child: Text("No se encontraron coincidencias."));
+                }
+
+                return ListView.builder(
+                  itemCount: filteredFriends.length,
+                  itemBuilder: (context, index) {
+                    final friend = filteredFriends[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        final result = await GoRouter.of(context)
+                            .push('/friend/${friend.idFriend}');
+
+                        if (result == true) {
+                          _friendsStore
+                              .fetchFriends(); 
+                        }
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        child: ListTile(
+                          leading: friend.photo.isNotEmpty
+                              ? CircleAvatar(
+                                  backgroundImage:
+                                      FileImage(File(friend.photo)),
+                                )
+                              : const CircleAvatar(child: Icon(Icons.person)),
+                          title: Text('${friend.firstName} ${friend.lastName}'),
+                          subtitle: Text(friend.email),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _deleteFriend(friend.idFriend!),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddFriendDialog,
@@ -149,6 +223,15 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
   List<LocationEntity> _locations = [];
   final List<int> _selectedLocationIds = [];
 
+  bool _hasSubmitted =
+      false; 
+  final Map<String, String> _errorMessages = {
+    'firstName': '',
+    'lastName': '',
+    'email': '',
+    'phoneNumber': '',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -160,7 +243,6 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         await widget.locationsStore.fetchLocations();
     List<LocationEntity> occupiedLocations =
         await widget.friendsStore.fetchOccupiedLocationsExcludingFriend(0);
-    print('Ubicaciones ocupadas: $occupiedLocations');
     setState(() {
       _locations = allLocations
           .where((location) => !occupiedLocations
@@ -175,11 +257,42 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
 
     if (image != null) {
       setState(() {
-        _imagePath = image.path; // Almacena la ruta de la imagen seleccionada
+        _imagePath = image.path;
       });
-      widget.onImagePicked(
-          image.path); // Llama a la función para actualizar la imagen
+      widget.onImagePicked(image.path);
     }
+  }
+
+  bool _validateFields() {
+    bool isValid = true;
+
+    setState(() {
+      _errorMessages['firstName'] =
+          firstNameController.text.isEmpty ? 'El nombre es obligatorio' : '';
+      _errorMessages['lastName'] =
+          lastNameController.text.isEmpty ? 'El apellido es obligatorio' : '';
+      _errorMessages['email'] = _isValidEmail(emailController.text)
+          ? ''
+          : 'Introduce un correo válido';
+      _errorMessages['phoneNumber'] =
+          _isValidPhoneNumber(phoneNumberController.text)
+              ? ''
+              : 'Introduce un número de teléfono válido';
+
+      isValid = _errorMessages.values.every((error) => error.isEmpty);
+    });
+
+    return isValid;
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegExp.hasMatch(email);
+  }
+
+  bool _isValidPhoneNumber(String phoneNumber) {
+    final phoneRegExp = RegExp(r'^\d{3,}$');
+    return phoneRegExp.hasMatch(phoneNumber);
   }
 
   @override
@@ -192,26 +305,34 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: firstNameController,
-                decoration: const InputDecoration(labelText: "Nombre"),
-              ),
+              _buildTextField(firstNameController, "Nombre", 'firstName'),
+              if (_errorMessages['firstName']!.isNotEmpty && _hasSubmitted)
+                Text(
+                  _errorMessages['firstName']!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               const SizedBox(height: 10),
-              TextField(
-                controller: lastNameController,
-                decoration: const InputDecoration(labelText: "Apellido"),
-              ),
+              _buildTextField(lastNameController, "Apellido", 'lastName'),
+              if (_errorMessages['lastName']!.isNotEmpty && _hasSubmitted)
+                Text(
+                  _errorMessages['lastName']!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               const SizedBox(height: 10),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
+              _buildTextField(emailController, "Email", 'email'),
+              if (_errorMessages['email']!.isNotEmpty && _hasSubmitted)
+                Text(
+                  _errorMessages['email']!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               const SizedBox(height: 10),
-              TextField(
-                controller: phoneNumberController,
-                decoration:
-                    const InputDecoration(labelText: "Número de Teléfono"),
-              ),
+              _buildTextField(
+                  phoneNumberController, "Número de Teléfono", 'phoneNumber'),
+              if (_errorMessages['phoneNumber']!.isNotEmpty && _hasSubmitted)
+                Text(
+                  _errorMessages['phoneNumber']!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: _pickImage,
@@ -236,44 +357,40 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
       ),
       actions: [
         ElevatedButton(
-          onPressed: () async {
-            FriendEntity newFriend = FriendEntity(
-              firstName: firstNameController.text,
-              lastName: lastNameController.text,
-              email: emailController.text,
-              telephone: phoneNumberController.text,
-              photo: _imagePath ??
-                  '', // Usa la imagen seleccionada o una cadena vacía
-            );
+          onPressed: () {
+            setState(() {
+              _hasSubmitted = true;
+            });
 
-            final response = await widget.friendsStore.addFriend(newFriend);
-            if (response["success"]) {
-              await _assignLocations(response['id']);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(response["message"]),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(response["message"]),
-                  backgroundColor: Colors.red,
-                ),
-              );
+            if (_validateFields()) {
+              _addFriend();
             }
-            Navigator.of(context).pop();
           },
           child: const Text("Agregar Amigo"),
         ),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(); // Cierra el diálogo
+            Navigator.of(context).pop(); 
           },
           child: const Text("Cancelar"),
         ),
       ],
+    );
+  }
+
+  Widget _buildTextField(
+      TextEditingController controller, String label, String key) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      onChanged: (value) {
+        if (_hasSubmitted) {
+          _validateFields(); 
+        }
+      },
     );
   }
 
@@ -327,6 +444,35 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         );
       }).toList(),
     );
+  }
+
+  Future<void> _addFriend() async {
+    FriendEntity newFriend = FriendEntity(
+      firstName: firstNameController.text,
+      lastName: lastNameController.text,
+      email: emailController.text,
+      telephone: phoneNumberController.text,
+      photo: _imagePath ?? '',
+    );
+
+    final response = await widget.friendsStore.addFriend(newFriend);
+    if (response["success"]) {
+      await _assignLocations(response['id']);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response["message"]),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response["message"]),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    Navigator.of(context).pop();
   }
 
   Future<void> _assignLocations(int friendId) async {

@@ -13,7 +13,8 @@ class LocationsRepositoryImpl extends LocationsRepository {
   }
 
   @override
-  Future<bool> deleteLocation(int idLocation) {
+  Future<bool> deleteLocation(int idLocation) async {
+    await datasource.deleteLocationFriend(idLocation);
     return datasource.deleteLocation(idLocation);
   }
 

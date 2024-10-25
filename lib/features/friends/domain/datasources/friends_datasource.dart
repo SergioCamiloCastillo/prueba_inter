@@ -10,4 +10,5 @@ abstract class FriendsDatasource {
   Future<List<LocationEntity>> getLocationsByFriend(int friendId);
   Future<bool> deleteLocationByFriend(int friendId, int locationId);
   Future<List<LocationEntity>> getLocationsOcupped(int friendId);
+  Future<void> deleteFriendLocation(int friendId);
 }

@@ -23,8 +23,6 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Texto de bienvenida
-            // Card de selección de Temperatura
             _buildSelectionCard(
               context,
               icon: Icons.person,
@@ -35,7 +33,6 @@ class HomeScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 20),
-            // Card de selección de Presión
             _buildSelectionCard(
               context,
               icon: Icons.location_on,
@@ -51,7 +48,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Método para construir una tarjeta de selección
   Widget _buildSelectionCard(
     BuildContext context, {
     required IconData icon,
@@ -74,7 +70,7 @@ class HomeScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Ícono
+           
               CircleAvatar(
                 radius: 30,
                 backgroundColor: color.withOpacity(0.2),
@@ -85,7 +81,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 20),
-              // Texto
+    
               Text(
                 label,
                 style: const TextStyle(
@@ -95,7 +91,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // Flecha
+
               const Icon(
                 Icons.arrow_forward_ios,
                 color: Color(0xFF1E3A8A),

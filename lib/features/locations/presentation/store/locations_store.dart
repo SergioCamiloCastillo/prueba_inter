@@ -20,15 +20,16 @@ abstract class _LocationsStore with Store {
     final List<LocationEntity> fetchedLocations =
         await locationsRepository.getLocations();
     locations.addAll(fetchedLocations);
-    return fetchedLocations; // Retorna la lista de ubicaciones
+    return fetchedLocations; 
   }
   
   @action
   Future<Map<String, dynamic>> addLocation(LocationEntity location) async {
     try {
-      print('la location al guardar=>${location.latitude}');
+      print('la latitud al guardar=>${location.latitude}');
+      print('la longitud al guardar=>${location.longitude}');
       final response = await locationsRepository.addLocation(location);
-      await fetchLocations(); // Refrescar la lista después de agregar
+      await fetchLocations();
       return response;
     } catch (e) {
       print("Error al agregar ubicación: $e");
@@ -41,7 +42,7 @@ abstract class _LocationsStore with Store {
     try {
       bool success = await locationsRepository.deleteLocation(idLocation);
       if (success) {
-        await fetchLocations(); // Refrescar la lista después de eliminar
+        await fetchLocations();
       }
       return success;
     } catch (e) {
@@ -54,7 +55,7 @@ abstract class _LocationsStore with Store {
   Future<void> updateLocation(LocationEntity location) async {
     try {
       await locationsRepository.updateLocation(location);
-      await fetchLocations(); // Refrescar la lista después de actualizar
+      await fetchLocations(); 
     } catch (e) {
       print("Error al actualizar ubicación: $e");
     }
@@ -62,7 +63,7 @@ abstract class _LocationsStore with Store {
 
   @action
   Future<LocationEntity?> getLocationById(int idLocation) async {
-    await fetchLocations(); // Esperar a que la lista de ubicaciones se cargue
+    await fetchLocations(); 
     print("Buscando ubicación con id $idLocation");
     try {
       return locations

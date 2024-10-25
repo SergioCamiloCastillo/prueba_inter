@@ -23,26 +23,24 @@ abstract class _FriendsStore with Store {
 
   @action
   Future<Map<String, dynamic>> addFriend(FriendEntity friend) async {
-    // Verificar si la cantidad de amigos es menor a 5
     if (friends.length >= 5) {
       print('No se puede agregar más amigos, ya tienes 5.');
       return {
         "success": false,
         "message": "No se pueden agregar más amigos, máximo 5"
-      }; // No se puede agregar más amigos
+      }; 
     }
 
     try {
       final response = await friendsRepository.addFriend(friend);
-      await fetchFriends(); // Refrescar la lista después de agregar
-      return response; // Operación exitosa
+      await fetchFriends(); 
+      return response; 
     } catch (e) {
-      // Manejo de errores
       print("Error al agregar amigo: $e");
       return {
         "success": false,
         "message": "Error al agregar amigo"
-      }; // Indica que hubo un error
+      }; 
     }
   }
 
@@ -50,7 +48,7 @@ abstract class _FriendsStore with Store {
   Future<void> updateFriend(FriendEntity friend) async {
     try {
       await friendsRepository.updateFriend(friend);
-      await fetchFriends(); // Refrescar la lista después de actualizar
+      await fetchFriends(); 
     } catch (e) {
       print("Error al actualizar amigo: $e");
     }
@@ -61,25 +59,25 @@ abstract class _FriendsStore with Store {
     try {
       bool success = await friendsRepository.deleteFriend(idFriend);
       if (success) {
-        await fetchFriends(); // Refrescar la lista después de eliminar
+        await fetchFriends();
       }
       return success;
     } catch (e) {
       print("Error al eliminar amigo: $e");
-      return false; // Indica que hubo un error
+      return false; 
     }
   }
 
   @action
   Future<FriendEntity?> getFriendById(int idFriend) async {
-    await fetchFriends(); // Esperar a que la lista de amigos se cargue
+    await fetchFriends(); 
     print("Buscando amigo con id $idFriend");
     print('Amigos: $friends');
     try {
       return friends.firstWhere((friend) => friend.idFriend == idFriend);
     } catch (e) {
       print("Amigo con id $idFriend no encontrado.");
-      return null; // Si no se encuentra, devuelve null
+      return null; 
     }
   }
 
@@ -113,7 +111,7 @@ abstract class _FriendsStore with Store {
   @action
   Future<void> assignLocation(int friendId, int locationId) async {
     await friendsRepository.assignLocationToFriend(friendId, locationId);
-    await fetchFriends(); // Refrescar la lista después de la asignación
+    await fetchFriends();
   }
 
   @action

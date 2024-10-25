@@ -11,23 +11,20 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
     try {
       final db = await _databaseHelper.database;
 
-      // 1. Obtener todas las ubicaciones existentes
       final List<Map<String, dynamic>> existingLocations =
           await db.query('locations');
 
-      // 2. Revisar la distancia de la nueva ubicación con las existentes
       for (var existingLocation in existingLocations) {
         double existingLat = existingLocation['latitude'];
         double existingLon = existingLocation['longitude'];
 
         double distance = calculateDistance(
-          4.6964175,
-          -74.1228677,
+          location.latitude,
+          location.longitude,
           existingLat,
           existingLon,
         );
         print('Distancia: $distance');
-        // 3. Verificar si la distancia es menor a 500 metros
         if (distance < 500) {
           print(
               'La nueva ubicación está demasiado cerca de una ubicación existente.');
@@ -42,8 +39,9 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
       final locationId = await db.insert('locations', {
         'name': location.name,
         'description': location.description,
-        'latitude': 4.6965929,
-        'longitude': -74.1223724,
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+        'location': location.location,
       });
 
       final photosMap = location.photos;
@@ -76,14 +74,14 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
       );
       if (result > 0) {
         print('Ubicación eliminada correctamente');
-        return true; // Operación exitosa
+        return true;
       } else {
         print('No se encontró la ubicación con el ID: $idLocation');
-        return false; // No se encontró la ubicación
+        return false; 
       }
     } catch (e) {
       print('Hubo un error al eliminar la ubicación: $e');
-      return false; // Indica que hubo un error
+      return false; 
     }
   }
 
@@ -96,6 +94,7 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
       return LocationEntity(
         idLocation: maps[i]['id'],
         name: maps[i]['name'],
+        location: maps[i]['location'] ?? '',
         description: maps[i]['description'],
         latitude: maps[i]['latitude'] ?? 0.0,
         longitude: maps[i]['longitude'] ?? 0.0,
@@ -113,7 +112,6 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
       {
         'name': location.name,
         'description': location.description,
-        // Agrega otros campos según sea necesario
       },
       where: 'id = ?',
       whereArgs: [location.idLocation],
@@ -125,28 +123,24 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
   Future<LocationEntity?> getLocationById(int idLocation) async {
     final db = await _databaseHelper.database;
 
-    // Consulta para obtener la ubicación por ID
     final List<Map<String, dynamic>> maps = await db.query(
       'locations',
       where: 'id = ?',
       whereArgs: [idLocation],
     );
 
-    // Verificar si se encontró la ubicación
     if (maps.isNotEmpty) {
-      // Si existe, crear y devolver la entidad de ubicación
       return LocationEntity(
         idLocation: maps[0]['id'],
         name: maps[0]['name'],
+        location: maps[0]['location'] ?? '',
         description: maps[0]['description'],
         latitude: maps[0]['latitude'] ?? 0.0,
         longitude: maps[0]['longitude'] ?? 0.0,
-        // Para obtener las fotos, podrías hacer otra consulta aquí
         photos:
-            await getPhotosForLocation(idLocation), // Método para obtener fotos
+            await getPhotosForLocation(idLocation), 
       );
     }
-    // Retornar null si no se encontró la ubicación
     return null;
   }
 
@@ -159,8 +153,18 @@ class LocationsDatasourceLocaldatabaseImpl extends LocationsDatasource {
       whereArgs: [idLocation],
     );
 
-    // Retornar solo las URLs de las fotos
     return List.generate(
         photosMaps.length, (i) => photosMaps[i]['url'] as String);
+  }
+
+  @override
+  Future<void> deleteLocationFriend(int locationId) async {
+    final db = await _databaseHelper.database;
+
+    await db.delete(
+      'friend_locations',
+      where: 'locationId = ?',
+      whereArgs: [locationId],
+    );
   }
 }
