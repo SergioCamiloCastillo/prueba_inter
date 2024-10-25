@@ -186,14 +186,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
 class AddFriendDialog extends StatefulWidget {
   final Function(String) onImagePicked;
-  final FriendsStore friendsStore;
   final LocationsStore locationsStore;
+  final FriendsStore friendsStore;
 
   const AddFriendDialog({
-    required this.onImagePicked,
-    required this.friendsStore,
-    required this.locationsStore,
     super.key,
+    required this.onImagePicked,
+    required this.locationsStore,
+    required this.friendsStore,
   });
 
   @override
@@ -283,7 +283,10 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Agregar Amigo"),
+      title: const Text(
+        "Agregar Amigo",
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      ),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -291,37 +294,27 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTextField(firstNameController, "Nombre", 'firstName'),
-              if (_errorMessages['firstName']!.isNotEmpty && _hasSubmitted)
-                Text(
-                  _errorMessages['firstName']!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+              _buildErrorText('firstName'),
               const SizedBox(height: 10),
               _buildTextField(lastNameController, "Apellido", 'lastName'),
-              if (_errorMessages['lastName']!.isNotEmpty && _hasSubmitted)
-                Text(
-                  _errorMessages['lastName']!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+              _buildErrorText('lastName'),
               const SizedBox(height: 10),
               _buildTextField(emailController, "Email", 'email'),
-              if (_errorMessages['email']!.isNotEmpty && _hasSubmitted)
-                Text(
-                  _errorMessages['email']!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+              _buildErrorText('email'),
               const SizedBox(height: 10),
               _buildTextField(
                   phoneNumberController, "Número de Teléfono", 'phoneNumber'),
-              if (_errorMessages['phoneNumber']!.isNotEmpty && _hasSubmitted)
-                Text(
-                  _errorMessages['phoneNumber']!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+              _buildErrorText('phoneNumber'),
               const SizedBox(height: 10),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _pickImage,
-                child: const Text("Seleccionar Imagen"),
+                icon: const Icon(Icons.image),
+                label: const Text("Seleccionar Imagen"),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor:
+                      Colors.orange.withOpacity(0.5), // Color del texto
+                ),
               ),
               if (_imagePath != null) ...[
                 const SizedBox(height: 10),
@@ -342,6 +335,16 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
       ),
       actions: [
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.orangeAccent, // Color del texto
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20), // Esquinas redondeadas
+            ),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 20, vertical: 10), // Espaciado interno
+            elevation: 5, // Sombra
+          ),
           onPressed: () {
             setState(() {
               _hasSubmitted = true;
@@ -370,12 +373,24 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: Colors.grey[200],
       ),
       onChanged: (value) {
         if (_hasSubmitted) {
           _validateFields();
         }
       },
+    );
+  }
+
+  Widget _buildErrorText(String key) {
+    return Visibility(
+      visible: _errorMessages[key]!.isNotEmpty && _hasSubmitted,
+      child: Text(
+        _errorMessages[key]!,
+        style: const TextStyle(color: Colors.red),
+      ),
     );
   }
 

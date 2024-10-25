@@ -44,7 +44,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
 
   Future<void> _getCurrentLocation() async {
     setState(() {
-      _isLoading = true; 
+      _isLoading = true;
     });
 
     bool serviceEnabled;
@@ -155,22 +155,73 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Ingresar Dirección"),
-          content: TextField(
-            controller: addressController,
-            decoration: const InputDecoration(hintText: "Escribe la dirección"),
+          title: const Text(
+            "Ingresar Dirección",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: 300, // Ancho del diálogo
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: addressController,
+                  decoration: InputDecoration(
+                    hintText: "Escribe la dirección",
+                    prefixIcon: const Icon(Icons.location_on),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.orangeAccent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.orange),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
+              ),
               onPressed: () async {
                 if (addressController.text.isNotEmpty) {
                   final responseConvert = await _convertAddressToCoordinates(
                       addressController.text);
                   print('responseConvert: $responseConvert');
                   if (responseConvert == true) {
-                    print('Ubicación encontrada');
+                    // Snackbar para indicar que se encontró la ubicación
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ubicación encontrada'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
                     Navigator.of(context).pop();
+                  } else {
+                    // Snackbar para indicar un error
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No se pudo encontrar la ubicación'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
                   }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor, ingresa una dirección'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                 }
               },
               child: const Text("Buscar"),
@@ -190,8 +241,8 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   Future<void> _showLocationChoiceDialog() async {
     showModalBottomSheet(
       context: context,
-      isDismissible: false, 
-      enableDrag: false, 
+      isDismissible: false,
+      enableDrag: false,
       builder: (BuildContext context) {
         return Container(
           padding: const EdgeInsets.all(16.0),
@@ -203,15 +254,15 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                 title: const Text("Usar ubicación actual del dispositivo"),
                 onTap: () async {
                   await _getCurrentLocation();
-                  Navigator.pop(context); 
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.search),
                 title: const Text("Ingresar dirección"),
                 onTap: () {
-                  Navigator.pop(context); 
-                  _showAddressInputDialog(); 
+                  Navigator.pop(context);
+                  _showAddressInputDialog();
                 },
               ),
             ],
@@ -310,7 +361,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
       height: 200,
       child: FlutterMap(
         options: MapOptions(
-          initialCenter: selectedLocation, 
+          initialCenter: selectedLocation,
           initialZoom: 16.0,
         ),
         children: [
@@ -345,7 +396,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
           icon: const Icon(Icons.search),
           onPressed: () {
             setState(() {
-              _selectedLocationNotifier.value = null; 
+              _selectedLocationNotifier.value = null;
             });
             _convertAddressToCoordinates(addressController.text);
           },
@@ -364,12 +415,11 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
           crossAxisSpacing: 4.0,
-          mainAxisSpacing: 4.0, 
-          childAspectRatio: 1, 
+          mainAxisSpacing: 4.0,
+          childAspectRatio: 1,
         ),
-        physics:
-            const NeverScrollableScrollPhysics(),
-        shrinkWrap: true, 
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
         itemCount: images!.length,
         itemBuilder: (context, index) {
           return Stack(
@@ -377,21 +427,18 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
             children: [
               SizedBox(
                 height: 80,
-                width: double
-                    .infinity, 
+                width: double.infinity,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.file(
                     File(images![index].path),
-                    fit: BoxFit
-                        .cover, 
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.remove_circle, color: Colors.red),
-                onPressed: () =>
-                    _removeImage(index),
+                onPressed: () => _removeImage(index),
               ),
             ],
           );
@@ -405,9 +452,9 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Agregar Ubicación", style: TextStyle(fontSize: 18)),
-        backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1)
-      ),
+          title:
+              const Text("Agregar Ubicación", style: TextStyle(fontSize: 18)),
+          backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1)),
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFFF8F8FA),
@@ -434,14 +481,13 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
               const SizedBox(height: 10),
               Center(
                 child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : _pickImages,
+                  onPressed: _isLoading ? null : _pickImages,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF64D0DE),
+                    backgroundColor: Colors.blue.withOpacity(0.5),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
-                  child: const Text("Agregar imágenes"),
+                  child: const Text("Agregar imágenes",
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 10),
@@ -450,22 +496,19 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveLocation,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color(0xFF111B54), 
+                    backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 10), 
+                        horizontal: 32, vertical: 10),
                     textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(20), 
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   child: const Text("Guardar ubicación",
                       style: TextStyle(color: Colors.white, fontSize: 15)),
                 ),
               ),
-              if (_isLoading) 
-                const Center(child: CircularProgressIndicator()),
+              if (_isLoading) const Center(child: CircularProgressIndicator()),
             ],
           ),
         ),
