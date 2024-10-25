@@ -403,10 +403,12 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       spacing: 10.0,
       runSpacing: 10.0,
       children: _locations.map((location) {
+        bool isSelected = _selectedLocationIds.contains(location.idLocation);
+
         return GestureDetector(
           onTap: () {
             setState(() {
-              if (_selectedLocationIds.contains(location.idLocation)) {
+              if (isSelected) {
                 _selectedLocationIds.remove(location.idLocation);
               } else {
                 if (_selectedLocationIds.length < 5) {
@@ -423,25 +425,36 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
             });
           },
           child: Card(
-            color: _selectedLocationIds.contains(location.idLocation)
-                ? Colors.orangeAccent
-                : Colors.grey[300],
+            color: isSelected ? Colors.orangeAccent : Colors.grey[300],
             elevation: 6,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                location.name,
-                style: TextStyle(
-                  color: _selectedLocationIds.contains(location.idLocation)
-                      ? Colors.white
-                      : Colors.black,
-                  fontWeight: _selectedLocationIds.contains(location.idLocation)
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    location.name,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  if (isSelected)
+                    const SizedBox(
+                        height: 5), // Espacio entre el nombre y "Asignada"
+                  if (isSelected)
+                    const Text(
+                      "(Asignada)",
+                      style: TextStyle(
+                        color: Colors.white, // Color del texto "Asignada"
+                        fontSize: 11, // Tamaño de fuente para "Asignada"
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

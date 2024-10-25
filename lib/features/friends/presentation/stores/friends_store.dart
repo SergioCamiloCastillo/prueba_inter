@@ -110,6 +110,7 @@ Future<void> updateFriend(FriendEntity friend) async {
       return [];
     }
   }
+  
 
   @action
   Future<void> assignLocation(int friendId, int locationId) async {

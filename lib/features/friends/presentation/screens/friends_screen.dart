@@ -152,20 +152,56 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   itemCount: filteredFriends.length,
                   itemBuilder: (context, index) {
                     final friend = filteredFriends[index];
-                    return CardList(
-                      icon: Icons.person,
-                      photo: friend.photo,
-                      title: "${friend.firstName} ${friend.lastName}",
-                      subTitle: friend.email,
-                      onDelete: () => _deleteFriend(friend.idFriend!),
-                      colorCard: Colors.orangeAccent,
-                      onTap: () async {
-                        final result = await GoRouter.of(context)
-                            .push('/friend/${friend.idFriend}');
 
-                        if (result == true) {
-                          _friendsStore.fetchFriends();
+                    if (friend.idFriend == null) {
+                      return const Center(
+                          child: Text("ID de amigo no disponible."));
+                    }
+
+                    return FutureBuilder<int>(
+                      future: _friendsStore
+                          .fetchLocationsByFriend(friend.idFriend!)
+                          .then((locations) => locations.length),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         }
+
+                        if (snapshot.hasError) {
+                          return const Center(
+                              child: Text("Error al cargar ubicaciones"));
+                        }
+
+                        final int locationCount = snapshot.data ?? 0;
+
+                        return CardList(
+                          icon: Icons.person,
+                          photo: friend.photo,
+                          title: "${friend.firstName} ${friend.lastName}",
+                          subTitle: locationCount > 0
+                              ? locationCount > 1
+                                  ? '$locationCount ubicaciones asignadas'
+                                  : '$locationCount ubicación asignada'
+                              : 'Sin ubicaciones asignadas',
+                          onDelete: () {
+                            if (friend.idFriend != null) {
+                              _deleteFriend(friend.idFriend!);
+                            }
+                          },
+                          colorCard: Colors.orangeAccent,
+                          onTap: () async {
+                            if (friend.idFriend != null) {
+                              final result = await GoRouter.of(context)
+                                  .push('/friend/${friend.idFriend}');
+                              if (result == true) {
+                                _friendsStore
+                                    .fetchFriends(); 
+                              }
+                            }
+                          },
+                        );
                       },
                     );
                   },
@@ -313,7 +349,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor:
-                      Colors.orange.withOpacity(0.5), // Color del texto
+                      Colors.orange.withOpacity(0.5),
                 ),
               ),
               if (_imagePath != null) ...[
@@ -337,13 +373,13 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.white,
-            backgroundColor: Colors.orangeAccent, // Color del texto
+            backgroundColor: Colors.orangeAccent, 
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Esquinas redondeadas
+              borderRadius: BorderRadius.circular(20), 
             ),
             padding: const EdgeInsets.symmetric(
-                horizontal: 20, vertical: 10), // Espaciado interno
-            elevation: 5, // Sombra
+                horizontal: 20, vertical: 10), 
+            elevation: 5,
           ),
           onPressed: () {
             setState(() {
@@ -457,7 +493,12 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
 
     final response = await widget.friendsStore.addFriend(newFriend);
     if (response["success"]) {
-      await _assignLocations(response['id']);
+      int friendId = response['id'];
+      await _assignLocations(
+          friendId); 
+
+      await widget.friendsStore.fetchFriends(); 
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response["message"]),
