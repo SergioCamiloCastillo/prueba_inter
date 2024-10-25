@@ -146,8 +146,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
     if (firstNameController.text.isEmpty) {
       _errorMessages['firstName'] = 'Este campo es obligatorio';
     } else {
-      _errorMessages['firstName'] =
-          ''; 
+      _errorMessages['firstName'] = '';
     }
 
     if (lastNameController.text.isEmpty) {
@@ -161,18 +160,17 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       _errorMessages['email'] =
           'Por favor, introduce un correo electrónico válido';
     } else {
-      _errorMessages['email'] = ''; 
+      _errorMessages['email'] = '';
     }
     if (phoneNumberController.text.isEmpty) {
       _errorMessages['phoneNumber'] = 'Este campo es obligatorio';
     } else {
-      _errorMessages['phoneNumber'] =
-          ''; 
+      _errorMessages['phoneNumber'] = '';
     }
 
     if (_errorMessages.values.any((msg) => msg.isNotEmpty)) {
       setState(() {});
-      return; 
+      return;
     }
 
     if (_friend != null) {
@@ -251,7 +249,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detalles del Amigo", style: TextStyle(fontSize: 18)),
-        backgroundColor: const Color(0xFFF8F8FA), 
+        backgroundColor: Colors.orangeAccent.withOpacity(0.2),
       ),
       body: _friend == null
           ? const Center(
@@ -259,7 +257,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
             )
           : Container(
               decoration: const BoxDecoration(
-                color: Color(0xFFF8F8FA), 
+                color: Color(0xFFF8F8FA),
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
@@ -336,7 +334,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF64D0DE), 
+                      color: Colors.orangeAccent,
                     ),
                     child: const Icon(
                       Icons.camera_alt,
@@ -383,8 +381,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
               labelText: label,
               border: const OutlineInputBorder(),
               focusedBorder: const OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: Color(0xFFA3AEC2), width: 2.0),
+                borderSide: BorderSide(color: Color(0xFFA3AEC2), width: 2.0),
               ),
             ),
           ),
@@ -427,7 +424,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
           },
           child: Card(
             color: _selectedLocationIds.contains(location.idLocation)
-                ? const Color(0xFF64D0DE)
+                ? Colors.orangeAccent
                 : Colors.grey[300],
             elevation: 6,
             shape: RoundedRectangleBorder(
@@ -458,12 +455,11 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
       child: ElevatedButton(
         onPressed: _hasChanges() ? _saveFriendDetails : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF111B54), 
-          padding: const EdgeInsets.symmetric(
-              horizontal: 32, vertical: 10), 
+          backgroundColor: const Color(0xFF111B54),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
           textStyle: const TextStyle(fontSize: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), 
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: const Text("Guardar Cambios",

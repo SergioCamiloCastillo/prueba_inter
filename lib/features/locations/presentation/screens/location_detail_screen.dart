@@ -56,7 +56,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(location!.name),
-        backgroundColor: const Color(0xFF64D0DE),
+        backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -76,33 +76,17 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                     children: [
                       if (location != null && location!.description!.isNotEmpty)
                         _labelCard(
+                            icon: Icons.description,
+                            colorIcon: const Color(0xFF1E3A8A),
                             label: "Descripción:",
                             value: location!.description!),
                       if (location != null && location!.location.isNotEmpty)
-                        _labelCard(
-                            label: "Ubicación", value: location!.location),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.pin_drop, color: Colors.teal),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Latitud: ${location!.latitude}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          const Icon(Icons.pin_drop, color: Colors.teal),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Longitud: ${location!.longitude}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
+                        const SizedBox(height: 10),
+                      _labelCard(
+                          icon: Icons.location_city,
+                          colorIcon: const Color(0xFF1E3A8A),
+                          label: "Ubicación",
+                          value: location!.location),
                     ],
                   ),
                 ),
@@ -197,14 +181,23 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 class _labelCard extends StatelessWidget {
   final String value;
   final String label;
+  final IconData icon;
+  final Color colorIcon;
 
-  const _labelCard({super.key, required this.value, required this.label});
+  const _labelCard(
+      {super.key,
+      required this.value,
+      required this.label,
+      required this.icon,
+      required this.colorIcon});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Icon(icon, color: colorIcon),
+        const SizedBox(width: 8),
         Text(
           '$label ',
           style: const TextStyle(

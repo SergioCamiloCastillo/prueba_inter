@@ -122,19 +122,30 @@ class _LocationsScreenState extends State<LocationsScreen> {
                 return Card(
                   margin:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: ListTile(
-                    title: Text(location.name),
-                    subtitle: Text(location.description ?? ""),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        _deleteLocation(location.idLocation!);
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                          backgroundColor:
+                              const Color(0xFF1E3A8A).withOpacity(0.2),
+                          child: const Icon(Icons.location_on,
+                              color: Color(0xFF1E3A8A))),
+                      title: Text(location.name),
+                      subtitle: Text(location.description ?? ""),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          _deleteLocation(location.idLocation!);
+                        },
+                      ),
+                      onTap: () {
+                        GoRouter.of(context)
+                            .push('/location/${location.idLocation}');
                       },
                     ),
-                    onTap: () {
-                      GoRouter.of(context)
-                          .push('/location/${location.idLocation}');
-                    },
                   ),
                 );
               },

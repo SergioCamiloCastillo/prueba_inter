@@ -35,7 +35,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     final friendsRepository =
         FriendsRepositoryImpl(datasource: friendsDatasource);
     _friendsStore = FriendsStore(friendsRepository);
-    _friendsStore.fetchFriends(); 
+    _friendsStore.fetchFriends();
 
     final locationsDatasource = LocationsDatasourceLocaldatabaseImpl();
     final locationsRepository =
@@ -50,7 +50,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         return AddFriendDialog(
           onImagePicked: (String path) {
             setState(() {
-              _imagePath = path; 
+              _imagePath = path;
             });
           },
           friendsStore: _friendsStore,
@@ -105,14 +105,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white, 
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 2,
                     blurRadius: 5,
-                    offset: const Offset(0, 3), 
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -126,11 +126,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Buscar por nombre',
                   hintStyle: TextStyle(color: Colors.grey),
-                  prefixIcon: Icon(Icons.search,
-                      color: Colors.grey), 
-                  border: InputBorder.none, 
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 15),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 15),
                 ),
               ),
             ),
@@ -159,25 +157,35 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             .push('/friend/${friend.idFriend}');
 
                         if (result == true) {
-                          _friendsStore
-                              .fetchFriends(); 
+                          _friendsStore.fetchFriends();
                         }
                       },
                       child: Card(
                         margin: const EdgeInsets.symmetric(
                             vertical: 8, horizontal: 16),
-                        child: ListTile(
-                          leading: friend.photo.isNotEmpty
-                              ? CircleAvatar(
-                                  backgroundImage:
-                                      FileImage(File(friend.photo)),
-                                )
-                              : const CircleAvatar(child: Icon(Icons.person)),
-                          title: Text('${friend.firstName} ${friend.lastName}'),
-                          subtitle: Text(friend.email),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => _deleteFriend(friend.idFriend!),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.orangeAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: ListTile(
+                            leading: friend.photo.isNotEmpty
+                                ? CircleAvatar(
+                                    backgroundImage:
+                                        FileImage(File(friend.photo)),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor:
+                                        Colors.orangeAccent.withOpacity(0.2),
+                                    child: const Icon(Icons.person,
+                                        color: Colors.orangeAccent)),
+                            title:
+                                Text('${friend.firstName} ${friend.lastName}'),
+                            subtitle: Text(friend.email),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => _deleteFriend(friend.idFriend!),
+                            ),
                           ),
                         ),
                       ),
@@ -223,8 +231,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
   List<LocationEntity> _locations = [];
   final List<int> _selectedLocationIds = [];
 
-  bool _hasSubmitted =
-      false; 
+  bool _hasSubmitted = false;
   final Map<String, String> _errorMessages = {
     'firstName': '',
     'lastName': '',
@@ -370,7 +377,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(); 
+            Navigator.of(context).pop();
           },
           child: const Text("Cancelar"),
         ),
@@ -388,7 +395,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
       ),
       onChanged: (value) {
         if (_hasSubmitted) {
-          _validateFields(); 
+          _validateFields();
         }
       },
     );
@@ -420,7 +427,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
           },
           child: Card(
             color: _selectedLocationIds.contains(location.idLocation)
-                ? const Color(0xFF64D0DE)
+                ? Colors.orangeAccent
                 : Colors.grey[300],
             elevation: 6,
             shape: RoundedRectangleBorder(
