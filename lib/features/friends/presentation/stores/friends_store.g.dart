@@ -74,6 +74,17 @@ mixin _$FriendsStore on _FriendsStore, Store {
         .run(() => super.fetchLocationsByFriend(friendId));
   }
 
+  late final _$fetchOccupiedLocationsExcludingFriendAsyncAction = AsyncAction(
+      '_FriendsStore.fetchOccupiedLocationsExcludingFriend',
+      context: context);
+
+  @override
+  Future<List<LocationEntity>> fetchOccupiedLocationsExcludingFriend(
+      int friendId) {
+    return _$fetchOccupiedLocationsExcludingFriendAsyncAction
+        .run(() => super.fetchOccupiedLocationsExcludingFriend(friendId));
+  }
+
   late final _$assignLocationAsyncAction =
       AsyncAction('_FriendsStore.assignLocation', context: context);
 
@@ -81,6 +92,15 @@ mixin _$FriendsStore on _FriendsStore, Store {
   Future<void> assignLocation(int friendId, int locationId) {
     return _$assignLocationAsyncAction
         .run(() => super.assignLocation(friendId, locationId));
+  }
+
+  late final _$removeLocationAsyncAction =
+      AsyncAction('_FriendsStore.removeLocation', context: context);
+
+  @override
+  Future<bool> removeLocation(int friendId, int locationId) {
+    return _$removeLocationAsyncAction
+        .run(() => super.removeLocation(friendId, locationId));
   }
 
   @override

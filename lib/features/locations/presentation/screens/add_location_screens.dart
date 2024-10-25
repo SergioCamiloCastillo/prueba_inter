@@ -406,7 +406,7 @@ class _AddLocationScreenState extends State<AddLocationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Agregar Ubicación", style: TextStyle(fontSize: 18)),
-        backgroundColor: const Color(0xFFF8F8FA),
+        backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1)
       ),
       body: Container(
         decoration: const BoxDecoration(

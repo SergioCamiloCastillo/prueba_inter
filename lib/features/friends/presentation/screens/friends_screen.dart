@@ -11,6 +11,7 @@ import 'package:prueba_inter/features/locations/domain/entities/location_entity.
 import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
 import 'package:prueba_inter/features/locations/presentation/store/locations_store.dart';
+import 'package:prueba_inter/features/shared/widgets/card_list.dart';
 
 class FriendsScreen extends StatefulWidget {
   static const name = "friends-screen";
@@ -98,7 +99,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Amigos")),
+      appBar: AppBar(title: const Text("Amigos registrados")),
       body: Column(
         children: [
           Padding(
@@ -151,7 +152,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   itemCount: filteredFriends.length,
                   itemBuilder: (context, index) {
                     final friend = filteredFriends[index];
-                    return GestureDetector(
+                    return CardList(
+                      icon: Icons.person,
+                      photo: friend.photo,
+                      title: "${friend.firstName} ${friend.lastName}",
+                      subTitle: friend.email,
+                      onDelete: () => _deleteFriend(friend.idFriend!),
+                      colorCard: Colors.orangeAccent,
                       onTap: () async {
                         final result = await GoRouter.of(context)
                             .push('/friend/${friend.idFriend}');
@@ -160,35 +167,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           _friendsStore.fetchFriends();
                         }
                       },
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.orangeAccent.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: ListTile(
-                            leading: friend.photo.isNotEmpty
-                                ? CircleAvatar(
-                                    backgroundImage:
-                                        FileImage(File(friend.photo)),
-                                  )
-                                : CircleAvatar(
-                                    backgroundColor:
-                                        Colors.orangeAccent.withOpacity(0.2),
-                                    child: const Icon(Icons.person,
-                                        color: Colors.orangeAccent)),
-                            title:
-                                Text('${friend.firstName} ${friend.lastName}'),
-                            subtitle: Text(friend.email),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => _deleteFriend(friend.idFriend!),
-                            ),
-                          ),
-                        ),
-                      ),
                     );
                   },
                 );

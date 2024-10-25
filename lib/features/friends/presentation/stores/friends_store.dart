@@ -22,37 +22,40 @@ abstract class _FriendsStore with Store {
   }
 
   @action
-  Future<Map<String, dynamic>> addFriend(FriendEntity friend) async {
-    if (friends.length >= 5) {
-      print('No se puede agregar más amigos, ya tienes 5.');
-      return {
-        "success": false,
-        "message": "No se pueden agregar más amigos, máximo 5"
-      }; 
-    }
-
-    try {
-      final response = await friendsRepository.addFriend(friend);
-      await fetchFriends(); 
-      return response; 
-    } catch (e) {
-      print("Error al agregar amigo: $e");
-      return {
-        "success": false,
-        "message": "Error al agregar amigo"
-      }; 
-    }
+Future<Map<String, dynamic>> addFriend(FriendEntity friend) async {
+  if (friends.length >= 5) {
+    print('No se puede agregar más amigos, ya tienes 5.');
+    return {
+      "success": false,
+      "message": "No se pueden agregar más amigos, máximo 5"
+    }; 
   }
+
+  try {
+    final response = await friendsRepository.addFriend(friend);
+    friends.add(friend); // Agrega el amigo directamente sin hacer fetch
+    return response; 
+  } catch (e) {
+    print("Error al agregar amigo: $e");
+    return {
+      "success": false,
+      "message": "Error al agregar amigo"
+    }; 
+  }
+}
 
   @action
-  Future<void> updateFriend(FriendEntity friend) async {
-    try {
-      await friendsRepository.updateFriend(friend);
-      await fetchFriends(); 
-    } catch (e) {
-      print("Error al actualizar amigo: $e");
+Future<void> updateFriend(FriendEntity friend) async {
+  try {
+    await friendsRepository.updateFriend(friend);
+    final index = friends.indexWhere((f) => f.idFriend == friend.idFriend);
+    if (index != -1) {
+      friends[index] = friend; // Actualiza directamente el amigo en la lista
     }
+  } catch (e) {
+    print("Error al actualizar amigo: $e");
   }
+}
 
   @action
   Future<bool> deleteFriend(int idFriend) async {

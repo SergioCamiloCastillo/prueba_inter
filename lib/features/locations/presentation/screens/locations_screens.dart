@@ -5,6 +5,7 @@ import 'package:prueba_inter/features/locations/domain/entities/location_entity.
 import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
 import 'package:prueba_inter/features/locations/presentation/store/locations_store.dart';
+import 'package:prueba_inter/features/shared/widgets/card_list.dart';
 
 class LocationsScreen extends StatefulWidget {
   static const name = "locations-screen";
@@ -70,7 +71,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Ubicaciones"),
+        title: const Text("Ubicaciones registradas"),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50.0),
           child: Padding(
@@ -119,34 +120,17 @@ class _LocationsScreenState extends State<LocationsScreen> {
               itemCount: filteredLocations.length,
               itemBuilder: (context, index) {
                 final location = filteredLocations[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E3A8A).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                          backgroundColor:
-                              const Color(0xFF1E3A8A).withOpacity(0.2),
-                          child: const Icon(Icons.location_on,
-                              color: Color(0xFF1E3A8A))),
-                      title: Text(location.name),
-                      subtitle: Text(location.description ?? ""),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          _deleteLocation(location.idLocation!);
-                        },
-                      ),
-                      onTap: () {
-                        GoRouter.of(context)
-                            .push('/location/${location.idLocation}');
-                      },
-                    ),
-                  ),
+                return CardList(
+                  icon: Icons.location_on,
+                  title: location.name,
+                  subTitle: location.location,
+                  onDelete: () {
+                    _deleteLocation(location.idLocation!);
+                  },
+                  colorCard: Colors.blue,
+                  onTap: () {
+                    context.push('/location/${location.idLocation}');
+                  },
                 );
               },
             );
