@@ -42,7 +42,7 @@ Estas son las principales librerías que se utilizaron en el proyecto:
 
 1. Clona este repositorio en tu máquina local:
    ```bash
-   git clone https://github.com/tuusuario/prueba_inter.git
+   git clone https://github.com/SergioCamiloCastillo/prueba_inter.git
    ```
 2. Navega hasta el directorio del proyecto::
    ```bash
