@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:prueba_inter/config/helpers/functions.dart';
 import 'package:prueba_inter/features/friends/domain/entities/friend_entity.dart';
 import 'package:prueba_inter/features/friends/infrastructure/datasources/friends_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/friends/infrastructure/repositories/friends_repository_impl.dart';
@@ -153,11 +154,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   itemBuilder: (context, index) {
                     final friend = filteredFriends[index];
 
-                    if (friend.idFriend == null) {
-                      return const Center(
-                          child: Text("ID de amigo no disponible."));
-                    }
-
                     return FutureBuilder<int>(
                       future: _friendsStore
                           .fetchLocationsByFriend(friend.idFriend!)
@@ -179,7 +175,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         return CardList(
                           icon: Icons.person,
                           photo: friend.photo,
-                          title: "${friend.firstName} ${friend.lastName}",
+                          title:
+                              "${capitalizeFirstLetter(friend.firstName)} ${capitalizeFirstLetter(friend.lastName)}",
                           subTitle: locationCount > 0
                               ? locationCount > 1
                                   ? '$locationCount ubicaciones asignadas'
@@ -196,8 +193,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               final result = await GoRouter.of(context)
                                   .push('/friend/${friend.idFriend}');
                               if (result == true) {
-                                _friendsStore
-                                    .fetchFriends(); 
+                                _friendsStore.fetchFriends();
                               }
                             }
                           },
@@ -348,8 +344,7 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
                 label: const Text("Seleccionar Imagen"),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor:
-                      Colors.orange.withOpacity(0.5),
+                  backgroundColor: Colors.orange.withOpacity(0.5),
                 ),
               ),
               if (_imagePath != null) ...[
@@ -373,12 +368,11 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.white,
-            backgroundColor: Colors.orangeAccent, 
+            backgroundColor: Colors.orangeAccent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), 
+              borderRadius: BorderRadius.circular(20),
             ),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 20, vertical: 10), 
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             elevation: 5,
           ),
           onPressed: () {
@@ -494,10 +488,9 @@ class _AddFriendDialogState extends State<AddFriendDialog> {
     final response = await widget.friendsStore.addFriend(newFriend);
     if (response["success"]) {
       int friendId = response['id'];
-      await _assignLocations(
-          friendId); 
+      await _assignLocations(friendId);
 
-      await widget.friendsStore.fetchFriends(); 
+      await widget.friendsStore.fetchFriends();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

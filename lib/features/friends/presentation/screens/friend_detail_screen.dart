@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:prueba_inter/config/helpers/functions.dart';
 import 'package:prueba_inter/features/friends/domain/entities/friend_entity.dart';
 import 'package:prueba_inter/features/friends/infrastructure/datasources/friends_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/friends/infrastructure/repositories/friends_repository_impl.dart';
@@ -347,11 +348,11 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _friend?.firstName ?? 'Nombre',
+            capitalizeFirstLetter(_friend?.firstName ?? 'Nombre'),
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           Text(
-            _friend?.lastName ?? 'Apellido',
+            capitalizeFirstLetter(_friend?.lastName ?? 'Apellido'),
             style: const TextStyle(fontSize: 18, color: Color(0xFFA3AEC2)),
           ),
           const SizedBox(height: 8),
@@ -436,7 +437,7 @@ class _FriendDetailScreenState extends State<FriendDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    location.name,
+                    capitalizeFirstLetter(location.name),
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                       fontWeight:

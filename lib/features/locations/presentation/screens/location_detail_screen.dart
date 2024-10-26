@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart'; // Asegúrate de importar esto
+import 'package:prueba_inter/config/helpers/functions.dart';
 import 'package:prueba_inter/features/locations/domain/entities/location_entity.dart';
 import 'package:prueba_inter/features/locations/infrastructure/datasources/locations_datasource_localdatabase_impl.dart';
 import 'package:prueba_inter/features/locations/infrastructure/repositories/locations_repository_impl.dart';
@@ -55,7 +56,7 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(location!.name),
+        title: Text(capitalizeFirstLetter(location!.name)),
         backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.1),
       ),
       body: Padding(
@@ -79,14 +80,15 @@ class _LocationDetailScreenState extends State<LocationDetailScreen> {
                             icon: Icons.description,
                             colorIcon: const Color(0xFF1E3A8A),
                             label: "Descripción:",
-                            value: location!.description!),
+                            value:
+                                capitalizeFirstLetter(location!.description!)),
                       if (location != null && location!.location.isNotEmpty)
                         const SizedBox(height: 10),
                       _labelCard(
                           icon: Icons.location_city,
                           colorIcon: const Color(0xFF1E3A8A),
-                          label: "Ubicación",
-                          value: location!.location),
+                          label: "Ubicación: ",
+                          value: capitalizeFirstLetter(location!.location)),
                     ],
                   ),
                 ),

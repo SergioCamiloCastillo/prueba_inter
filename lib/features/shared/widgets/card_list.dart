@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 
+import 'package:prueba_inter/config/helpers/functions.dart';
+
 class CardList extends StatelessWidget {
   final String? photo;
   final String title;
@@ -39,8 +41,8 @@ class CardList extends StatelessWidget {
                   backgroundColor: colorCard.withOpacity(0.2),
                   child: Icon(icon, color: colorCard),
                 ),
-          title: Text(title),
-          subtitle: Text(subTitle),
+          title: Text(capitalizeFirstLetter(title)),
+          subtitle: Text(capitalizeFirstLetter(subTitle)),
           trailing: IconButton(
             icon: const Icon(Icons.delete),
             onPressed: onDelete,
